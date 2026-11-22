@@ -1,8 +1,8 @@
 # Reading Frostbite
 
-A reader's guide to the Frostbite announcement: a 25-page whiteboard deck (English) and five
-interactive explainers (Traditional Chinese) on interaction nets, abstract machines, and what AI
-changes in chip design.
+A reader's guide to the Frostbite announcement: a long read and a 25-page whiteboard deck (English),
+and three interactive 3D explainers (Traditional Chinese) on interaction nets, abstract machines,
+and what AI changes in chip design.
 
 Open `index.html`, or visit the GitHub Pages site of this repository.
 

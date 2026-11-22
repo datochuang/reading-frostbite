@@ -49,14 +49,22 @@ section{display:flex;flex-direction:column;gap:18px}
 .btn:hover{background:var(--pen)}
 .facts{font-family:var(--font-label);font-size:13px;color:var(--mute);letter-spacing:.04em}
 
-/* the explainers */
-.pages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--rule)}
-.pages li{display:grid;grid-template-columns:auto 1fr;gap:3px 16px;padding:16px 0;border-bottom:1px solid var(--rule)}
-.pages .n{grid-row:1 / span 3;width:38px;height:38px;border:2.5px solid var(--ink);border-radius:50%;display:grid;place-items:center;
-  font-family:var(--font-label);font-weight:700;font-size:16px;margin-top:2px}
-.pages a{font-size:19px;font-weight:700;color:var(--ink);text-decoration-color:var(--marker);text-decoration-thickness:2px}
+/* the explainers: one row each, a screenshot of the 3D scene beside the description */
+.pages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:30px}
+.pages li{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px;align-items:center}
+.pages a.shot{display:block;position:relative;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--sheet);
+  box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s,transform .15s}
+.pages a.shot:hover{box-shadow:0 6px 20px rgba(0,0,0,.16);transform:translateY(-2px)}
+.pages a.shot img{display:block;width:100%;height:auto}
+.pages .badge{position:absolute;left:10px;bottom:10px;font-family:var(--font-label);font-size:12px;font-weight:700;letter-spacing:.06em;
+  color:#fff;background:rgba(22,32,43,.86);padding:4px 9px;border-radius:4px}
+.pages .txt{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pages .n{font-family:var(--font-label);font-size:13px;letter-spacing:.08em;color:var(--marker);font-weight:700}
+.pages .title{font-size:20px;font-weight:700;line-height:1.35;color:var(--ink);text-decoration-color:var(--marker);text-decoration-thickness:2px}
 .pages .zh{font-size:15px;color:var(--mute)}
 .pages p{font-size:16px;color:var(--ink-2);line-height:1.6}
+.pages .go{font-weight:700;font-size:15.5px;text-decoration:none}
+.pages .go:hover{text-decoration:underline}
 .term{background:var(--tint-pen);border-radius:4px;padding:12px 16px;font-size:15.5px;line-height:1.65;max-width:44em}
 
 .about ul,.sources ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:7px;font-size:16px;max-width:44em}
@@ -64,6 +72,7 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
 @media (max-width:640px){
   body{font-size:16px}
   .deck{grid-template-columns:1fr}
+  .pages li{grid-template-columns:1fr;gap:12px}
   .wrap{gap:42px}
 }
 </style>
@@ -110,15 +119,36 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
   <h2><span>The explainers: three 3D pages you can operate</span></h2>
   <p class="note col">These pages are written in Traditional Chinese. They read best in order, and each one also stands alone.</p>
   <ol class="pages">
-    <li><span class="n">1</span><a href="explainers/interaction-net-vs-von-neumann.html">Interaction net against von Neumann</a>
-      <span class="zh" lang="zh-Hant">Interaction Net 對照 von Neumann</span>
-      <p>The same problem on both machines, one step at a time, as two 3D scenes side by side, with every read and write shown.</p></li>
-    <li><span class="n">2</span><a href="explainers/interaction-net-test-cases.html">Eight tests for an interaction net</a>
-      <span class="zh" lang="zh-Hant">Interaction Net 八個測試</span>
-      <p>Eight small problems in 3D that show where an interaction net pays off and where it loses.</p></li>
-    <li><span class="n">3</span><a href="explainers/interaction-net-history.html">Thirty-six years of interaction nets</a>
-      <span class="zh" lang="zh-Hant">Interaction Net 三十六年</span>
-      <p>The history on four tracks, theory, software, hardware and business, as a 3D timeline you can drag, ending with a line of judgements on what is real and what is not yet shown.</p></li>
+    <li>
+      <a class="shot" href="explainers/interaction-net-vs-von-neumann.html" aria-label="Open explainer 1: Interaction net against von Neumann"><img src="img/interaction-net-vs-von-neumann.jpg" width="1120" height="640" loading="lazy" alt="Two 3D scenes side by side: on the left a von Neumann machine with its instruction memory, CPU and registers; on the right the same program drawn as an interaction net of nodes standing on a hardware tile"><span class="badge">3D · DRAG TO TURN</span></a>
+      <div class="txt">
+        <span class="n">EXPLAINER 1</span>
+        <a class="title" href="explainers/interaction-net-vs-von-neumann.html">Interaction net against von Neumann</a>
+        <span class="zh" lang="zh-Hant">Interaction Net 對照 von Neumann</span>
+        <p>The same problem on both machines, one step at a time, as two 3D scenes side by side, with every read and write shown. Ten chapters.</p>
+        <a class="go" href="explainers/interaction-net-vs-von-neumann.html">Open the 3D page →</a>
+      </div>
+    </li>
+    <li>
+      <a class="shot" href="explainers/interaction-net-test-cases.html" aria-label="Open explainer 2: Eight tests for an interaction net"><img src="img/interaction-net-test-cases.jpg" width="1120" height="640" loading="lazy" alt="Two 3D scenes side by side: on the left a pipelined von Neumann machine with an array of orders in memory; on the right a tree of nodes spread over sixteen hardware tiles"><span class="badge">3D · DRAG TO TURN</span></a>
+      <div class="txt">
+        <span class="n">EXPLAINER 2</span>
+        <a class="title" href="explainers/interaction-net-test-cases.html">Eight tests for an interaction net</a>
+        <span class="zh" lang="zh-Hant">Interaction Net 八個測試</span>
+        <p>Eight small problems in 3D that show where an interaction net pays off and where it loses, with the cycle counts as the data grows.</p>
+        <a class="go" href="explainers/interaction-net-test-cases.html">Open the 3D page →</a>
+      </div>
+    </li>
+    <li>
+      <a class="shot" href="explainers/interaction-net-history.html" aria-label="Open explainer 3: Thirty-six years of interaction nets"><img src="img/interaction-net-history.jpg" width="1120" height="640" loading="lazy" alt="A 3D timeline with four shelves, theory, software, hardware and business, from 1980 to 2026, and a column at the right giving the state of each track in November 2026"><span class="badge">3D · DRAG TO TURN</span></a>
+      <div class="txt">
+        <span class="n">EXPLAINER 3</span>
+        <a class="title" href="explainers/interaction-net-history.html">Thirty-six years of interaction nets</a>
+        <span class="zh" lang="zh-Hant">Interaction Net 三十六年</span>
+        <p>The history on four tracks, theory, software, hardware and business, as a 3D timeline you can drag, ending with a line of judgements on what is real and what is not yet shown.</p>
+        <a class="go" href="explainers/interaction-net-history.html">Open the 3D page →</a>
+      </div>
+    </li>
   </ol>
   <p class="term">A note on words. The deck says “abstract machine” where textbooks say “model of computation”, because “model” is now easily read as “AI model”. The article and the explainers use “abstract machine” too; the usual Chinese term is <span lang="zh-Hant">計算模型</span>. All of these mean the same thing: a set of rules that fixes what the state is, what one step does, and who decides the next step.</p>
 </section>
