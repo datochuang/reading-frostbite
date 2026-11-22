@@ -1,0 +1,1740 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<!--BEGIN-PAGE-->
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Interaction Net 八個測試</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* 版面：全頁共用同一組兩欄。左欄永遠是 von Neumann，右欄永遠是 interaction net。 */
+:root{
+  --bg:#f1f3f7; --surface:#ffffff; --surface-2:#e8ecf2; --ink:#17202c; --muted:#586576; --line:#d2d9e3;
+  --vn:#4a45b5; --vn-soft:#e9e8f9; --inet:#0b8578; --inet-soft:#dbf0ed; --hot:#d3227b; --on-accent:#ffffff;
+  --c-s:#3b86cf; --c-z:#687789; --c-add:#cf8a00; --c-mul:#d4522a; --c-dup:#2c9650; --c-era:#8567bf;
+  --box:#dde3eb; --box-2:#c4cdd9; --floor:#c3cbd7;
+  --sans:"IBM Plex Sans","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:10px;
+  --ch-vn:#6250d6; --ch-in:#1baf7a; --ch-in16:#eb6834; --ch-alt:#e34948; --ch-ans:#eda100;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e131a; --surface:#161d27; --surface-2:#1f2834; --ink:#e8edf4; --muted:#96a4b7; --line:#2c3746;
+    --vn:#a29cf7; --vn-soft:#26244c; --inet:#42cdbd; --inet-soft:#123531; --hot:#ff62aa; --on-accent:#0e131a;
+    --c-s:#5aa5ea; --c-z:#8695aa; --c-add:#e9ae25; --c-mul:#ee7349; --c-dup:#4fc274; --c-era:#a88ee0;
+    --box:#283444; --box-2:#1d2734; --floor:#303c4d; color-scheme:dark; --ch-vn:#9085e9; --ch-in:#199e70; --ch-in16:#d95926; --ch-alt:#e66767; --ch-ans:#c98500;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e131a; --surface:#161d27; --surface-2:#1f2834; --ink:#e8edf4; --muted:#96a4b7; --line:#2c3746;
+  --vn:#a29cf7; --vn-soft:#26244c; --inet:#42cdbd; --inet-soft:#123531; --hot:#ff62aa; --on-accent:#0e131a;
+  --c-s:#5aa5ea; --c-z:#8695aa; --c-add:#e9ae25; --c-mul:#ee7349; --c-dup:#4fc274; --c-era:#a88ee0;
+  --box:#283444; --box-2:#1d2734; --floor:#303c4d; color-scheme:dark; --ch-vn:#9085e9; --ch-in:#199e70; --ch-in16:#d95926; --ch-alt:#e66767; --ch-ans:#c98500;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+.wrap{max-width:1240px;margin:0 auto;padding-block:26px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.top{display:flex;flex-direction:column;gap:6px;max-width:92ch}
+.eyebrow{margin:0;font-size:12.5px;letter-spacing:.08em;color:var(--muted);font-weight:600}
+h1{margin:0;font-size:clamp(26px,3.4vw,38px);line-height:1.2;letter-spacing:-.01em;text-wrap:balance}
+h2{margin:0;font-size:22px;line-height:1.3;text-wrap:balance}
+h3{margin:0;font-size:13px;letter-spacing:.06em;font-weight:700}
+p{margin:0}
+.lede{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+
+.chapters{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chapters button{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:7px 13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;font-size:13.5px;cursor:pointer}
+.chapters .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.chapters button[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chapters button[aria-current="true"] .n{color:inherit;opacity:.7}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.panel>header{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.tag{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.tag::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--vn)}
+.inet .tag::before{background:var(--inet);border-radius:50%}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-left:auto}
+.chip{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:6px;background:var(--surface-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip b{font-weight:600}
+.vn .chip.done{background:var(--vn-soft);color:var(--vn)}
+.inet .chip.done{background:var(--inet-soft);color:var(--inet)}
+.view{position:relative;height:clamp(340px,58vh,560px);background:linear-gradient(var(--surface),var(--surface-2))}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab;display:block}
+.viewtools{position:absolute;right:8px;top:8px;display:flex;gap:4px}
+.viewtools button{min-width:30px;height:30px;padding:0 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 13px var(--mono);cursor:pointer}
+.viewtools button[aria-pressed="true"]{background:var(--inet);color:var(--on-accent);border-color:var(--inet)}
+.hint{position:absolute;left:10px;bottom:7px;right:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.legend{position:absolute;left:10px;top:8px;margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto auto;gap:1px 10px;font-size:11.5px;line-height:1.5;color:var(--muted);pointer-events:none}
+.legend li{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.legend li.wide{grid-column:1/-1}
+.legend i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.legend i.ring{background:transparent;border:1.5px dashed var(--hot)}
+.log{padding:9px 12px;border-top:1px solid var(--line);min-height:4.2em;font-size:13.5px}
+.log code{background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.strip{display:flex;align-items:flex-end;gap:10px;padding:6px 12px 9px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);min-height:46px}
+.strip .bars{display:flex;align-items:flex-end;gap:2px;height:28px;flex:1;min-width:0;overflow:hidden}
+.strip .bars i{flex:0 0 7px;background:var(--inet);border-radius:2px 2px 0 0;min-height:3px}
+.strip .bars i.live{background:var(--hot)}
+
+.toc{display:flex;flex-direction:column;gap:8px}
+.toc-hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+.toc-lb{font-size:13px;font-weight:700;letter-spacing:.08em}
+.toc-note{font-size:13px;color:var(--muted)}
+.toc-groups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 16px}
+.toc-group{display:flex;flex-direction:column;gap:5px;min-width:0}
+.toc-gl{font-size:12.5px;color:var(--muted)}
+.toc-gl b{font-size:13.5px}
+.toc-group.win .toc-gl b{color:var(--inet)}
+.toc-group.lose .toc-gl b{color:var(--vn)}
+.toc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.toc-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;padding:8px 10px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);cursor:pointer;min-width:0}
+.toc-grid button:hover{border-color:var(--muted)}
+.toc-grid .n{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;letter-spacing:.05em;color:var(--muted)}
+.toc-grid .ok{display:none;color:var(--inet);font-weight:700;letter-spacing:0}
+.toc-grid .seen .ok{display:inline}
+.toc-grid .t{font-size:14.5px;font-weight:700;line-height:1.3}
+.toc-grid .e{font-size:12px;line-height:1.35;color:var(--muted)}
+.toc-grid button[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.toc-grid button[aria-current="true"] :is(.n,.e,.ok){color:inherit;opacity:.75}
+.now{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:start;gap:14px 28px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;scroll-margin-top:10px}
+.now-head{display:flex;flex-direction:column;gap:5px;min-width:0}
+.now-n{font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.now h2{font-size:24px}
+.now .lede{color:var(--ink)}
+.now-nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn.cta{background:var(--hot);border-color:var(--hot);color:var(--on-accent);font-weight:600;margin-left:auto}
+.nextcard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 16px;align-items:center;text-align:left;width:100%;max-width:760px;padding:12px 16px;border:1px solid var(--ink);border-radius:var(--r);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+.nextcard .k{grid-column:1;font-size:12.5px;color:var(--muted)}
+.nextcard .t{grid-column:1;font-size:17px;font-weight:700}
+.nextcard .e{grid-column:1;font-size:13px;color:var(--muted)}
+.nextcard .go{grid-column:2;grid-row:1/4;font-size:22px}
+.panel .how{border-bottom:0;border-top:1px solid var(--line)}
+section.controls{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:8px}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.stages{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:12.5px;color:var(--muted)}
+.stages b{color:var(--ink);font-weight:700}
+.stages ol{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.stages li{display:flex;align-items:center;gap:5px;padding:3px 10px 3px 4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);white-space:nowrap}
+.stages li i{font:600 11px var(--mono);width:18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--ink);display:grid;place-items:center}
+.stages li .v{color:var(--vn);font-weight:600}
+.stages li .i{color:var(--inet);font-weight:600}
+.stages li .s{color:var(--line)}
+.stages li.on{border-color:var(--hot)}
+.stages li.on i{background:var(--hot);color:var(--on-accent)}
+@media (min-width:821px){ section.controls{position:sticky;top:0;z-index:6;box-shadow:0 8px 16px -12px rgba(0,0,0,.45)} }
+.hwp{display:block;margin-top:2px;font-size:12px;font-family:var(--mono);opacity:.8}
+.log .wait{color:var(--muted)}
+.log .kill{color:var(--hot);font-weight:600}
+.pcharts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.pchart{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;overflow-x:auto;min-width:0}
+.pchart h3{margin-bottom:8px}
+.pchart.v h3{color:var(--vn)} .pchart.i h3{color:var(--inet)}
+.pchart table{border-collapse:separate;border-spacing:2px;font-family:var(--mono);font-size:11.5px}
+.pchart th{font-weight:500;color:var(--muted);min-width:21px;height:18px;text-align:center}
+.pchart th:first-child,.pchart td:first-child{text-align:left;white-space:nowrap;padding-right:10px;min-width:118px;color:var(--ink)}
+.pchart td{height:20px;text-align:center;border-radius:3px;font-weight:600;font-family:var(--sans);font-size:11px}
+.pchart td.none{color:var(--muted);font-weight:400;text-align:left}
+.pchart th.nc{color:var(--hot);font-weight:700}
+.pchart td.nc{box-shadow:inset 0 0 0 1px var(--line)}
+.pchart.v td.s0,.pchart.v td.s1{background:var(--vn-soft);color:var(--vn)}
+.pchart.v td.s2,.pchart.v td.s3{background:var(--vn);color:var(--on-accent)}
+.pchart.i td.s0,.pchart.i td.s1{background:var(--inet-soft);color:var(--inet)}
+.pchart.i td.s2,.pchart.i td.s3{background:var(--inet);color:var(--on-accent)}
+.pchart td.x{background:transparent;color:var(--hot);box-shadow:inset 0 0 0 1.5px var(--hot)}
+@media (max-width:980px){ .pcharts{grid-template-columns:minmax(0,1fr)} }
+.verdict{font-size:14px;line-height:1.55;padding:7px 11px;border-radius:8px;background:var(--surface-2)}
+.verdict.win b{color:var(--inet)}
+.verdict.lose b{color:var(--vn)}
+.chapter>h2{margin-top:6px}
+.sc-legend{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--muted)}
+.sc-legend span{display:inline-flex;align-items:center;gap:7px}
+.sc-wrap{position:relative;max-width:760px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 8px 4px}
+.sc-wrap svg{display:block;width:100%;height:auto}
+.sc-wrap .grid{stroke:var(--line);stroke-width:1}
+.sc-wrap .ax{font-family:var(--sans);font-size:11.5px;font-weight:500;fill:var(--muted);font-variant-numeric:tabular-nums}
+.sc-wrap .lab{font-family:var(--sans);font-size:12px;font-weight:600;fill:var(--ink);font-variant-numeric:tabular-nums}
+.sc-wrap .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.sc-wrap .pt{stroke:var(--surface);stroke-width:2}
+.sc-wrap .hit{fill:transparent}
+.sc-wrap .guide{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.sc-tip{position:absolute;top:12px;transform:translateX(12px);display:flex;flex-direction:column;gap:2px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12.5px;white-space:nowrap;pointer-events:none;box-shadow:0 8px 18px -12px rgba(0,0,0,.55)}
+.sc-tip.flip{transform:translateX(calc(-100% - 12px))}
+.sc-tip b{font-weight:600}
+.sc-tip span{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.sc-tip i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.sc-tip em{margin-left:auto;padding-left:16px;font-style:normal;font-family:var(--mono);font-weight:600;color:var(--ink)}
+.sc-table{width:100%;min-width:560px;border-collapse:collapse;font-size:13px}
+.sc-table th,.sc-table td{padding:6px 12px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.sc-table thead th{border-top:0;background:var(--surface-2);font-size:12.5px}
+.sc-table th:first-child{text-align:left;font-weight:600}
+.sc-table td{font-family:var(--mono)}
+.sc-table td:last-child{font-family:var(--sans);color:var(--muted)}
+.cards.mini{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:760px}
+.cards.mini .card:first-child,.cards.mini .card{border-top:0}
+@media (max-width:980px){ .now{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:820px){ .toc-groups{grid-template-columns:minmax(0,1fr)} }
+.task{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 16px;min-width:0}
+.task-q{display:flex;flex-direction:column;gap:3px;min-width:0}
+.task-lb{font-size:12.5px;font-weight:600;letter-spacing:.05em;color:var(--muted)}
+.task-title{font-size:18px;font-weight:700;line-height:1.35}
+.task-code{margin:5px 0 0;padding:10px 12px;border-radius:8px;background:var(--surface-2);font-family:var(--mono);font-size:13.5px;line-height:1.6;white-space:pre;overflow-x:auto;tab-size:4}
+.task-code .cm{color:var(--muted)}
+.task-side{display:flex;flex-direction:column;gap:6px;min-width:0}
+.res{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:6px 12px;border-radius:8px;background:var(--surface-2);font-size:13px;color:var(--muted);white-space:nowrap}
+.res b{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.2em;text-align:right}
+.res.v.done{background:var(--vn-soft);color:var(--vn)} .res.v.done b{color:var(--vn)}
+.res.i.done{background:var(--inet-soft);color:var(--inet)} .res.i.done b{color:var(--inet)}
+.task-note{grid-column:1/-1;font-size:13.5px;color:var(--muted);max-width:92ch}
+.how{padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--muted)}
+.how b{color:var(--ink);font-weight:600}
+.how code{background:var(--surface-2);padding:1px 5px;border-radius:4px}
+@supports (grid-template-rows:subgrid){
+  @media (min-width:821px){
+    .stage{row-gap:0}
+    .stage>.panel{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:span 5}
+  }
+}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.btn{padding:7px 13px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+.group{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.group>label,.group>span.lb{font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);background:transparent;padding:7px 10px;font-size:13px;color:var(--ink);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--inet);color:var(--on-accent);font-weight:600}
+select{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+input[type=range]{accent-color:var(--inet);width:110px}
+
+.chapter{display:flex;flex-direction:column;gap:12px}
+.chapter .lede{max-width:72ch;color:var(--ink)}
+.rows{display:grid;grid-template-columns:minmax(110px,.42fr) 1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.rows>div{padding:10px 14px;border-top:1px solid var(--line);min-width:0}
+.rows>div:nth-child(3n+2),.rows>div:nth-child(3n){border-left:1px solid var(--line)}
+.rows .hd{border-top:0;font-size:12.5px;font-weight:700;letter-spacing:.05em;background:var(--surface-2)}
+.rows .hd.v{color:var(--vn)} .rows .hd.i{color:var(--inet)}
+.rows .q{font-weight:600}
+.try{border:1px dashed var(--hot);border-radius:var(--r);padding:10px 14px;background:var(--surface)}
+.try b{color:var(--hot)}
+.extra{display:flex;flex-direction:column;gap:8px}
+.map{display:grid;grid-template-columns:auto 1fr 1fr;gap:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);font-size:13.5px;max-width:760px}
+.map>div{padding:7px 12px;border-top:1px solid var(--line)}
+.map>div:nth-child(-n+3){border-top:0;background:var(--surface-2);font-weight:700;font-size:12.5px}
+.map .on{background:var(--hot);color:var(--on-accent)}
+.barlist{display:grid;grid-template-columns:max-content 1fr max-content;gap:6px 10px;align-items:center;font-size:13px;max-width:760px}
+.barlist .track{height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.barlist .fill{height:100%;background:var(--inet);border-radius:4px}
+.barlist .fill.v{background:var(--vn)}
+.barlist .cur{font-weight:700}
+.barlist .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.note{font-size:13px;color:var(--muted);max-width:76ch}
+
+.section{display:flex;flex-direction:column;gap:12px}
+.isa{width:100%;border-collapse:collapse;font-size:13.5px}
+.isa th,.isa td{text-align:left;padding:7px 10px;border-top:1px solid var(--line);vertical-align:top}
+.isa th{font-size:12.5px;letter-spacing:.05em;background:var(--surface-2);border-top:0}
+.isa td:first-child{font-family:var(--mono);white-space:nowrap}
+.isa tr.on td{background:var(--vn-soft)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0}
+.card{padding:10px 12px;border-top:1px solid var(--line);border-left:1px solid var(--line);min-width:0}
+.card.on{background:var(--inet-soft)}
+.card svg{width:100%;height:auto;display:block}
+.card h4{margin:0 0 2px;font-size:14px;font-family:var(--mono)}
+.card p{font-size:12.5px;color:var(--muted);line-height:1.5}
+.card p b{color:var(--ink);font-weight:600}
+.panel .pad{padding:10px 12px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sum{width:100%;min-width:620px;border-collapse:collapse;font-size:14px}
+.sum th,.sum td{text-align:left;padding:8px 14px;border-top:1px solid var(--line);vertical-align:top}
+.sum thead th{border-top:0;background:var(--surface-2);font-size:12.5px;letter-spacing:.05em}
+.sum thead th:nth-child(2){color:var(--vn)} .sum thead th:nth-child(3){color:var(--inet)}
+.sum tbody th{font-weight:600;white-space:nowrap}
+ul.plain{margin:0;padding-left:1.2em;max-width:76ch}
+footer{font-size:13px;color:var(--muted)}
+footer a{color:var(--inet)}
+@media (max-width:820px){
+  .duo{grid-template-columns:1fr}
+  .view{height:clamp(320px,52vh,460px)}
+  .rows{grid-template-columns:1fr}
+  .rows .hd{display:none}
+  .rows>div{border-left:0!important}
+  .rows .q{background:var(--surface-2)}
+  .rows .v::before,.rows .i::before{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em}
+  .rows .v::before{content:"VON NEUMANN";color:var(--vn)}
+  .rows .i::before{content:"INTERACTION NET";color:var(--inet)}
+  .chips{margin-left:0}
+  .task{grid-template-columns:minmax(0,1fr)}
+  .task-side{flex-direction:row;flex-wrap:wrap}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Interaction net 對照 von Neumann・測試篇</p>
+    <h1>八個小測試：右邊贏在哪，輸在哪</h1>
+    <p class="lede">同一段小程式用兩種計算模型來跑，兩邊都疊著做，數做完要幾個 cycle。四個測試是 interaction net 佔便宜的情況，四個是它沒辦法的情況。每個測試有 3D 動畫，也有一張把資料放大之後的比較圖。</p>
+    <p class="lede"><b>還不清楚「計算模型」是什麼，先看<a href="computational-model-from-a-resistor-network.html" target="_blank" rel="noopener">入門頁：計算模型是什麼</a>。</b>每個測試先寫出題目。題目下面那段程式是一般程式語言的寫法，也就是把題目寫成 von Neumann 模型之後的樣子；右邊的圖是同一題寫成 interaction net。</p>
+  </header>
+
+  <nav class="toc" aria-label="測試清單">
+    <div class="toc-hd"><span class="toc-lb">測試清單</span><span class="toc-note">八個各自獨立的測試，點任何一個切換。卡片最下面那一行，是資料放到最大時誰比較快（右邊取 1 個與 16 個 tile 裡較快的）。</span></div>
+    <div class="toc-groups" id="chapters"></div>
+  </nav>
+
+  <section class="now" id="now" aria-label="現在這個測試">
+    <div class="now-head">
+      <span class="now-n" id="nowN"></span>
+      <h2 id="nowTitle"></h2>
+      <p class="lede" id="nowLede"></p>
+      <p class="verdict" id="nowVerdict"></p>
+      <div class="now-nav"><button class="btn" id="bPrev">← 上一個</button><button class="btn" id="bNext"></button></div>
+    </div>
+  <div class="task">
+    <div class="task-q">
+      <span class="task-lb">這個測試的題目</span>
+      <div class="task-title" id="taskTitle"></div>
+      <span class="task-lb" style="margin-top:8px">下面是這一題寫成一般程式的樣子，左邊的 von Neumann 模型照它一步一步做。右邊的圖是同一題的另一種寫法。</span>
+      <pre class="task-code" id="taskCode"></pre>
+    </div>
+    <div class="task-side" aria-live="polite">
+      <div class="res"><span>正確答案</span><b id="taskAns"></b></div>
+      <div class="res v"><span>von Neumann 算出</span><b id="taskVn">—</b></div>
+      <div class="res i"><span>interaction net 算出</span><b id="taskIn">—</b></div>
+    </div>
+    <p class="task-note" id="taskNote"></p>
+  </div>
+  </section>
+
+  <section class="controls" id="controls" aria-label="控制動畫">
+    <div class="ctl-row">
+      <div class="group">
+        <button class="btn primary" id="bStep">▶ 走一個 cycle</button>
+        <button class="btn" id="bTick" hidden>走一個階段</button>
+        <button class="btn" id="bPlay">連續播放</button>
+        <button class="btn" id="bEnd">直接跑完</button>
+        <button class="btn" id="bReset">重來</button>
+      </div>
+      <div class="group"><label for="speed">速度</label><input type="range" id="speed" min="0" max="100" value="55"></div>
+      <div class="group" id="modeGroup"><span class="lb">右邊用幾個 tile</span><div class="seg" id="modes"></div></div>
+      <div class="group" id="presetGroup" hidden><span class="lb" id="pickLabel">程式</span><div class="seg" id="pickSeg" hidden></div><select id="preset" aria-labelledby="pickLabel"></select></div>
+      <button class="btn cta" id="bNextDone" hidden></button>
+    </div>
+    <div class="stages">
+      <span id="stageNote"></span>
+      <ol id="stages" aria-label="一件工作的四個階段">
+        <li><i>1</i><span class="v">fetch</span><span class="s">｜</span><span class="i">對上</span></li>
+        <li><i>2</i><span class="v">decode</span><span class="s">｜</span><span class="i">拆掉</span></li>
+        <li><i>3</i><span class="v">execute</span><span class="s">｜</span><span class="i">長出</span></li>
+        <li><i>4</i><span class="v">write back</span><span class="s">｜</span><span class="i">接好</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="duo stage" aria-label="兩台機器">
+    <article class="panel vn">
+      <header><span class="tag">von Neumann machine</span><div class="chips" id="vnChips"></div></header>
+      <div class="view">
+        <canvas id="vnCanvas" aria-label="von Neumann machine 的 3D 模型：memory 裡的 instruction 與資料、CPU 與 register"></canvas>
+        <div class="viewtools"><button id="vnIn" aria-label="放大">+</button><button id="vnOut" aria-label="縮小">−</button><button id="vnHome" aria-label="視角歸位">⌂</button></div>
+        <div class="hint">拖曳旋轉</div>
+      </div>
+      <div class="log" id="vnLog" aria-live="polite"></div>
+      <p class="how" id="vnHow"></p>
+      <div class="strip"><span>PC 走過的 instruction</span><div class="bars" id="vnBars" style="align-items:center"></div></div>
+    </article>
+    <article class="panel inet">
+      <header><span class="tag">Interaction net</span><div class="chips" id="inChips"></div></header>
+      <div class="view">
+        <canvas id="inCanvas" aria-label="interaction net 的 3D 模型：node、port 與 wire，地板上是 tile 的硬體"></canvas>
+        <div class="viewtools"><button id="inRot" aria-pressed="true" aria-label="自動擺動視角">擺動</button><button id="inIn" aria-label="放大">+</button><button id="inOut" aria-label="縮小">−</button><button id="inHome" aria-label="視角歸位">⌂</button></div>
+        <ul class="legend" aria-label="圖例">
+          <li><i style="background:var(--c-s)"></i>數字</li><li><i style="background:var(--c-add)"></i>運算</li><li><i style="background:var(--c-mul)"></i>函式・分支</li><li><i style="background:var(--c-z)"></i>list・tree</li><li><i style="background:var(--c-dup)"></i>δ 複製</li><li><i style="background:var(--c-era)"></i>ε 丟棄</li>
+          <li class="wide">尖端是 principal port</li><li class="wide"><i class="ring"></i>active pair</li><li class="wide">地板上：tile 的硬體</li>
+        </ul>
+        <div class="hint" id="inHint"></div>
+      </div>
+      <div class="log" id="inLog" aria-live="polite"></div>
+      <p class="how" id="inHow"></p>
+      <div class="strip"><span id="inBarsLb">每個 cycle 有幾對在途中</span><div class="bars" id="inBars"></div></div>
+    </article>
+  </section>
+
+  <section class="chapter" id="chapter" aria-live="polite"></section>
+
+  <section class="section">
+    <h2>八個測試合起來看</h2>
+    <ul class="plain">
+      <li>右邊贏的四個，共同點是工作之間沒有先後關係：切得開的資料、互不相干的迴圈、可以一格一格交接的兩段處理、不需要猜的分支。</li>
+      <li>右邊輸的四個，原因各不相同：一條相依鏈疊不起來；沒有 address，拿不到「第 k 筆」；一個值只能給一個人，共用就要複製；用不到的資料要花力氣丟。</li>
+      <li>加 tile 只在第一類有用。在相依鏈、查表、找到就停這三個測試裡，1 個 tile 和 16 個 tile 的時間一樣。</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>兩邊的假設</h2>
+    <ul class="plain">
+      <li><b>左邊</b>是一顆單發射、in-order 的 core：四級 pipeline，一個 cycle 進一道 instruction；有 forwarding；JMP、CALL、RET 的目標抓得到；條件分支查一張 2-bit 的預測表，猜錯作廢兩道。</li>
+      <li><b>右邊的 tile 是「一個執行單元」</b>：可以想成專用硬體的一塊，也可以想成軟體 runtime 的一條 thread。這一頁數的是模型本身的 cycle，沒有算進軟體 runtime 每一步多花的 instruction，所以呈現的是這個模型在理想的執行單元上能做到的程度。Interaction net 到 2025 年為止都是用軟體在一般 CPU 上執行，實測比這裡的數字慢；專用硬體能做到多接近，還沒有量測。</li>
+      <li><b>右邊</b>每個 tile 每個 cycle 可以開始一對改寫，一次改寫走四個階段；新的 active pair 要等接好線才能取用；沒事做的 tile 向鄰居拿一對，拿到的下一個 cycle 才能做。</li>
+      <li><b>最影響結果的是「一次 interaction 要幾個 cycle」</b>，這一頁設成四個。實際硬體如果比較短，右邊所有的線都會往下移，輸的幾個測試差距會縮小。「加 tile 沒有幫助」「要從頭走」「要複製」「要丟棄」這些性質不會因此改變。</li>
+      <li>兩邊各照自己最自然的寫法：左邊用 array 和迴圈，右邊用 list、tree 和遞迴。</li>
+      <li>沒有算能量、面積、clock frequency，也沒有算 tile 之間搬資料的延遲。右邊的 tile 是這一頁自己的簡化模型，和 Frostbite 的設計不完全相同。</li>
+    </ul>
+  </section>
+
+  <footer>
+    基本觀念（node、port、active pair、六條規則、tile 裡的零件）在第一篇：<a href="interaction-net-vs-von-neumann.html">Interaction Net 對照 von Neumann</a>。延伸閱讀：<a href="https://doi.org/10.1145/96709.96718">Lafont, Interaction Nets (POPL 1990)</a>、<a href="https://architectlabs.com/blog/frostbite">Architect Labs, Frostbite</a>。
+  </footer>
+</div>
+
+<script>
+(()=>{'use strict';
+/*ENGINE-BEGIN*/
+const TOP=3;
+const CTOR={NUM:1,NIL:1,CONS:1,NODE:1};
+const BASE_AR={NUM:0,NIL:0,CONS:2,NODE:2,OP:2,OP1:1,DUP:2,ERA:0,OUT:0};
+const OPS={'+':(a,b)=>a+b,'−':(a,b)=>a-b,'×':(a,b)=>a*b,'÷':(a,b)=>Math.floor(a/b),'≥':(a,b)=>+(a>=b),'>':(a,b)=>+(a>b)};
+const IS_CMP={'≥':1,'>':1};
+const pad2=n=>String(n).padStart(2,'0');
+
+// 右邊的函式：每個函式是一種 node，principal port 碰到的資料決定套哪一條規則。
+// 規則的右邊用 builder 寫：B.op / B.op1 / B.dup / B.era / B.fn / B.num / B.link。
+const DEFS={
+  ship:{label:'if',args:['total'],
+    num:(B,a)=>B.link(B.op1('−',100,'R',a.total),a.ret),
+    zero:(B,a)=>B.link(B.op1('+',60,'R',a.total),a.ret),
+    say:{num:'比較結果不是 0，條件成立：if 換成「−100」，接在金額與結果之間。else 那條路沒有長出來。',
+         zero:'比較結果是 0，條件不成立：if 換成「+60」，接在金額與結果之間。then 那條路沒有長出來。'}},
+  loop:{label:'loop',args:['wait'],
+    zero:(B,a)=>B.link(a.wait,a.ret),
+    num:(B,a)=>{ const d=B.dup(B.op1('×',2,'R',a.wait)); const w=B.fn('cap',B.op1('>',500,'R',d[0]),d[1]); B.link(B.fn('loop',B.op1('−',1,'R',B.num(a.v)),w),a.ret); },
+    say:{zero:'i 是 0，迴圈結束：loop 消失，wait 直接接到結果。',
+         num:v=>'i 是 '+v+'，還要再跑：loop 換成一圈迴圈的身體（×2、δ、>500、if），外加「−1」和下一個 loop。'}},
+  cap:{label:'if',args:['x'],
+    num:(B,a)=>{ B.era(a.x); B.link(B.num(500),a.ret); },
+    zero:(B,a)=>B.link(a.x,a.ret),
+    say:{num:'比較結果不是 0，超過上限：if 換成 500，原來的 wait 交給 ε 丟掉。',
+         zero:'比較結果是 0，沒超過上限：if 消失，wait 原樣接過去。'}},
+  total:{label:'Σ',args:[],
+    nil:(B,a)=>B.link(B.num(0),a.ret),
+    cons:(B,a)=>B.link(B.op('+',B.fn('fee',a.kids[0]),B.fn('total',a.kids[1])),a.ret),
+    say:{nil:'list 走完了：Σ 換成 0。',cons:'Σ 碰到一格：換成一個 +，一邊接 fee(這一筆)，一邊接 Σ(後面那一串)。'}},
+  fee:{label:'fee',args:[],
+    any:(B,a)=>B.link(B.fn('ship',B.op1('≥',1000,'R',B.num(a.v)),B.num(a.v)),a.ret),
+    say:{any:v=>'呼叫 fee('+v+')：fee 換成它自己的圖，也就是「≥1000」和 if，金額 '+v+' 各給一份。'}},
+  sum:{label:'sum',args:[],
+    nil:(B,a)=>B.link(B.num(0),a.ret),
+    cons:(B,a)=>B.link(B.op('+',a.kids[0],B.fn('sum',a.kids[1])),a.ret),
+    say:{nil:'list 走完了：sum 換成 0。',cons:'sum 碰到一格：換成一個 +，一邊接這一筆金額，一邊接 sum(後面那一串)。'}},
+  len:{label:'len',args:[],
+    nil:(B,a)=>B.link(B.num(0),a.ret),
+    cons:(B,a)=>{ B.era(a.kids[0]); B.link(B.op1('+',1,'R',B.fn('len',a.kids[1])),a.ret); },
+    say:{nil:'list 走完了：len 換成 0。',cons:'len 碰到一格：金額用不到，交給 ε；自己換成「+1」，後面接 len(剩下那一串)。'}},
+  first:{label:'first',args:[],
+    nil:(B,a)=>B.link(B.num(0),a.ret),
+    cons:(B,a)=>{ B.link(a.kids[0],a.ret); B.era(a.kids[1]); },
+    say:{nil:'list 是空的：first 換成 0。',cons:'first 碰到一格：這一格的內容直接接到結果，後面那一串用不到，交給 ε。'}},
+  pay:{label:'pay',args:[],
+    any:(B,a)=>B.link(B.fn('ship',B.op1('≥',1000,'R',B.num(a.v)),B.num(a.v)),a.ret),
+    tree:(B,a)=>B.link(B.op('+',B.fn('pay',a.kids[0]),B.fn('pay',a.kids[1])),a.ret),
+    say:{any:v=>'pay 碰到一筆訂單 '+v+'：換成算應付金額的圖，也就是「≥1000」和 if。',tree:'pay 碰到一組：換成一個 +，兩邊各接一個 pay，往兩半走。'}},
+  mapfee:{label:'map',args:[],
+    nil:(B,a)=>B.link(B.nil(),a.ret),
+    cons:(B,a)=>B.link(B.cons(B.fn('fee',a.kids[0]),B.fn('mapfee',a.kids[1])),a.ret),
+    say:{nil:'list 走完了：map 換成新 list 的結尾。',cons:'map 碰到一格：先交出新 list 的一格，內容接著 fee(這一筆)，後面接著 map(剩下那一串)。fee 還沒算完，下游已經拿得到這一格。'}},
+  iter:{label:'loop',args:['x'],
+    zero:(B,a)=>B.link(a.x,a.ret),
+    num:(B,a)=>B.link(B.fn('iter',B.op1('−',1,'R',B.num(a.v)),B.op1('+',1,'R',B.op1('×',3,'R',a.x))),a.ret),
+    say:{zero:'n 數到 0，迴圈結束：x 直接接到結果。',num:v=>'n 是 '+v+'，還要再跑：loop 換成「×3」「+1」，外加「−1」和下一個 loop。'}},
+  nth:{label:'nth',args:['xs'],
+    zero:(B,a)=>B.link(B.fn('first',a.xs),a.ret),
+    num:(B,a)=>B.link(B.fn('nth',B.op1('−',1,'R',B.num(a.v)),B.fn('tail',a.xs)),a.ret),
+    say:{zero:'k 數到 0：要的就是現在這一格，換成 first。',num:v=>'k 是 '+v+'，還沒到：換成 tail 丟掉現在這一格，k 減一，再往下一格。'}},
+  tail:{label:'tail',args:[],
+    nil:(B,a)=>B.link(B.nil(),a.ret),
+    cons:(B,a)=>{ B.era(a.kids[0]); B.link(a.kids[1],a.ret); },
+    say:{nil:'list 已經空了。',cons:'tail 碰到一格：這一格的內容交給 ε，後面那一串接上去。'}},
+  find:{label:'find',args:[],
+    nil:(B,a)=>B.link(B.num(0),a.ret),
+    cons:(B,a)=>{ const d=B.dup(a.kids[0]); B.link(B.fn('pick',B.op1('>',1000,'R',d[0]),d[1],a.kids[1]),a.ret); },
+    say:{nil:'找到底都沒有：find 換成 0。',cons:'find 碰到一格：金額經過 δ，一份拿去比「>1000」，一份留著；後面那一串先接在 if 上。'}},
+  pick:{label:'if',args:['x','rest'],
+    num:(B,a)=>{ B.link(a.x,a.ret); B.era(a.rest); },
+    zero:(B,a)=>{ B.era(a.x); B.link(B.fn('find',a.rest),a.ret); },
+    say:{num:'比較結果不是 0，找到了：這一筆接到結果。後面整串 list 用不到，交給 ε 一格一格丟。',zero:'比較結果是 0，不是這一筆：金額交給 ε，find 往下一格找。'}},
+  rev:{label:'rev',args:[],
+    any:(B,a)=>B.link(B.num(a.v),a.ret),
+    tree:(B,a)=>B.link(B.op('+',B.fn('rev',a.kids[0]),B.fn('rev',a.kids[1])),a.ret),
+    say:{any:v=>'rev 碰到門市：營收 '+v+' 直接交給等結果的人。',tree:'rev 碰到區域：換成一個 +，兩邊各接一個 rev，往兩個子區域走。'}}
+};
+
+function nodeLabel(n){
+  switch(n.type){
+    case 'NUM': return String(n.v);
+    case 'OP': return n.op;
+    case 'OP1': return n.side==='L'?n.k+n.op:n.op+n.k;
+    case 'FN': return DEFS[n.fn].label;
+    case 'DUP': return 'δ';
+    case 'ERA': return 'ε';
+    case 'CONS': return '::';
+    case 'NIL': return '[ ]';
+    case 'NODE': return '組';
+    default: return '';
+  }
+}
+const evalOp1=(f,x)=>f.side==='L'?OPS[f.op](f.k,x):OPS[f.op](x,f.k);
+function ruleKey(d,c){
+  if(c.type==='NUM') return c.v===0&&d.zero?'zero':(d.num?'num':'any');
+  return c.type==='NIL'?'nil':c.type==='CONS'?'cons':'tree';
+}
+// 一個 active pair 會套哪一條規則、做什麼事（不改動圖）
+function describe(net,pair){
+  const f=net.nodes.get(pair.f), c=net.nodes.get(pair.c), fl=nodeLabel(f), cl=nodeLabel(c); let group='', say='', alu=null;
+  switch(f.type){
+    case 'OP': group='OP'; say='「'+f.op+'」拿到第一個運算元 '+c.v+'，變成「'+c.v+f.op+'」，principal port 轉去等第二個運算元。'; break;
+    case 'OP1': { const r=evalOp1(f,c.v); group='OP1'; alu=(f.side==='L'?f.k+' '+f.op+' '+c.v:c.v+' '+f.op+' '+f.k)+' = '+r; say='「'+fl+'」拿到 '+c.v+'，算出 '+(IS_CMP[f.op]?(r?'1（成立）':'0（不成立）'):r)+'，交給等結果的人。'; break; }
+    case 'DUP':
+      if(c.type==='NUM'||c.type==='NIL'){ group='DUPN'; say='δ 把'+(c.type==='NUM'?' '+c.v+' ':' list 的結尾')+'複製成兩份，各給一邊。'; }
+      else{ group='DUPC'; say='δ 把這一格複製成兩格，再放兩個 δ 去複製它的內容和後面那一串。'; }
+      break;
+    case 'ERA': group='ERA'; say=c.type==='NUM'?'ε 丟掉 '+c.v+'，兩個 node 一起消失。':c.type==='NIL'?'ε 丟掉 list 的結尾，兩個 node 一起消失。':'ε 丟掉這一格，再放兩個 ε 去丟它的內容和後面那一串。'; break;
+    case 'FN': { const d=DEFS[f.fn], s=d.say[ruleKey(d,c)]; group='FN'; say=typeof s==='function'?s(c.v):s; break; }
+  }
+  return {group,name:fl+' ⋈ '+cl,say,alu,fn:f.type==='FN'?fl:null};
+}
+
+class Net{
+  constructor(){ this.nodes=new Map(); this.pairs=[]; this.nid=1; this.pid=1; this.out=null; this.interactions=0; this.curTile=0; this.clock=0; this.fresh=new Map(); }
+  add(type,pos,extra){
+    const ar=type==='FN'?DEFS[extra.fn].args.length+1:BASE_AR[type];
+    const n=Object.assign({id:this.nid++,type,ports:new Array(ar+1).fill(null),pos:[pos[0],pos[1],pos[2]],vel:[0,0,0],owner:this.curTile,born:this.clock},extra||{});
+    this.nodes.set(n.id,n); return n;
+  }
+  link(a,pa,b,pb){
+    a.ports[pa]={n:b.id,p:pb}; b.ports[pb]={n:a.id,p:pa};
+    this.fresh.set(a.id+':'+pa,this.clock); this.fresh.set(b.id+':'+pb,this.clock);
+    if(pa===0&&pb===0&&a.type!=='OUT'&&b.type!=='OUT'){
+      const ca=!!CTOR[a.type], cb=!!CTOR[b.type];
+      if(ca===cb) throw new Error('bad pair '+a.type+'~'+b.type);
+      const f=ca?b:a, c=ca?a:b;
+      f.owner=c.owner=this.curTile;
+      this.pairs.push({id:this.pid++,f:f.id,c:c.id,tile:this.curTile,born:this.clock});
+    }
+  }
+  peer(n,i){ const r=n.ports[i]; return {node:this.nodes.get(r.n),port:r.p}; }
+  fire(pair){
+    const f=this.nodes.get(pair.f), c=this.nodes.get(pair.c), info=describe(this,pair); this.curTile=pair.tile;
+    const fp=f.ports.map((_,i)=>i?this.peer(f,i):null), cp=c.ports.map((_,i)=>i?this.peer(c,i):null);
+    const mid=[(f.pos[0]+c.pos[0])/2,(f.pos[1]+c.pos[1])/2,(f.pos[2]+c.pos[2])/2], base=this.nid;
+    const B=makeBuilder(this,j=>[mid[0]+Math.sin((base+j)*12.9898)*0.5,mid[1]+Math.sin((base+j)*78.233)*0.5,mid[2]+Math.sin((base+j)*37.719)*0.5]);
+    switch(f.type){
+      case 'OP': if(c.type!=='NUM') throw new Error('OP needs NUM'); B.link(B.op1(f.op,c.v,'L',fp[1]),fp[2]); break;
+      case 'OP1': if(c.type!=='NUM') throw new Error('OP1 needs NUM'); B.link(B.num(evalOp1(f,c.v)),fp[1]); break;
+      case 'DUP':
+        if(c.type==='NUM'){ B.link(B.num(c.v),fp[1]); B.link(B.num(c.v),fp[2]); }
+        else if(c.type==='NIL'){ B.link(B.nil(),fp[1]); B.link(B.nil(),fp[2]); }
+        else{ const h=B.dup(cp[1]), t=B.dup(cp[2]), mk=c.type==='CONS'?B.cons:B.tree; B.link(mk(h[0],t[0]),fp[1]); B.link(mk(h[1],t[1]),fp[2]); }
+        break;
+      case 'ERA': if(c.type==='CONS'||c.type==='NODE'){ B.era(cp[1]); B.era(cp[2]); } break;
+      case 'FN': { const d=DEFS[f.fn], a={v:c.v,kids:cp.slice(1),ret:fp[d.args.length+1]}; d.args.forEach((nm,i)=>{ a[nm]=fp[i+1]; }); d[ruleKey(d,c)](B,a); break; }
+      default: throw new Error('no rule '+f.type);
+    }
+    this.nodes.delete(f.id); this.nodes.delete(c.id);
+    this.pairs=this.pairs.filter(p=>p.id!==pair.id);
+    this.interactions++;
+    return {rule:info.group,name:info.name,say:info.say,alu:info.alu,fn:info.fn,made:B.made,gone:[f,c],tile:pair.tile};
+  }
+  result(){ const r=this.out.ports[0], n=r?this.nodes.get(r.n):null; return {value:n&&n.type==='NUM'&&r.p===0&&this.pairs.length===0?n.v:null}; }
+  agentCount(){ return this.nodes.size-1; }
+}
+function makeBuilder(net,posFn){
+  let j=0; const made=[];
+  const mk=(type,extra)=>{ const n=net.add(type,posFn(j++),extra); made.push(n); return n; };
+  const L=(n,p,ref)=>net.link(n,p,ref.node,ref.port);
+  const B={made,
+    num:v=>({node:mk('NUM',{v}),port:0}),
+    nil:()=>({node:mk('NIL'),port:0}),
+    cons:(h,t)=>{ const n=mk('CONS'); L(n,1,h); L(n,2,t); return {node:n,port:0}; },
+    tree:(l,r)=>{ const n=mk('NODE'); L(n,1,l); L(n,2,r); return {node:n,port:0}; },
+    list:a=>a.reduceRight((t,x)=>B.cons(B.num(x),t),B.nil()),
+    op:(op,a,b)=>{ const n=mk('OP',{op}); L(n,1,b); L(n,0,a); return {node:n,port:2}; },
+    op1:(op,k,side,x)=>{ const n=mk('OP1',{op,k,side}); L(n,0,x); return {node:n,port:1}; },
+    dup:x=>{ const n=mk('DUP'); L(n,0,x); return [{node:n,port:1},{node:n,port:2}]; },
+    era:x=>{ const n=mk('ERA'); L(n,0,x); },
+    fn:(name,x,...args)=>{ const n=mk('FN',{fn:name}); args.forEach((a,i)=>L(n,i+1,a)); L(n,0,x); return {node:n,port:args.length+1}; },
+    link:(a,b)=>net.link(a.node,a.port,b.node,b.port)
+  };
+  return B;
+}
+function buildNet(ex){
+  const net=new Net(), out=net.add('OUT',[0,TOP,0]); net.out=out;
+  ex.main(makeBuilder(net,j=>[Math.sin(j*1.7)*2,TOP-1.5-j*0.3,Math.cos(j*2.3)*2]),{node:out,port:0});
+  // 起始位置：從結果往下一層一層排開，之後交給 layout
+  const depth=new Map([[out.id,0]]), q=[out], layers=[];
+  while(q.length){ const n=q.shift(), d=depth.get(n.id); (layers[d]=layers[d]||[]).push(n);
+    for(const r of n.ports){ if(!r||depth.has(r.n)) continue; depth.set(r.n,d+1); q.push(net.nodes.get(r.n)); } }
+  layers.forEach((ns,d)=>ns.forEach((n,i)=>{ if(n!==out) n.pos=[(i-(ns.length-1)/2)*1.7+(d%2?0.25:-0.25),TOP-1.5*d,((i+d)%2?-0.3:0.3)]; }));
+  net.fresh.clear(); for(const p of net.pairs) p.born=-10;
+  return net;
+}
+
+// 左邊的機器：一份小小的 assembler 與直譯器
+function assemble(src){
+  const labels={}, code=[];
+  for(const raw of src.split('\n')){
+    let s=raw.replace(/;.*$/,'').trim(); if(!s) continue;
+    const m=/^(\w+):\s*(.*)$/.exec(s); if(m){ labels[m[1]]=code.length; s=m[2]; if(!s) continue; }
+    const sp=s.search(/\s/), op=sp<0?s:s.slice(0,sp), args=sp<0?[]:s.slice(sp+1).split(',').map(x=>x.trim());
+    code.push({op,args});
+  }
+  for(const i of code){
+    i.args=i.args.map(a=>Object.prototype.hasOwnProperty.call(labels,a)?{addr:labels[a]}:a);
+    i.text=(i.op+'     ').slice(0,5)+i.args.map(a=>a.addr!=null?pad2(a.addr):a).join(', ');
+  }
+  return code;
+}
+const isReg=x=>typeof x==='string'&&/^r(\d+|a)$/.test(x);
+const ARITH={ADD:'+',ADDI:'+',SUB:'−',SUBI:'−',MUL:'×',MULI:'×',DIV:'÷'}, CMPB={BLT:'<',BGE:'≥',BLE:'≤'};
+class VN{
+  constructor(ex){
+    this.code=ex.code||(ex.code=assemble(ex.asm)); this.reg={}; this.mem={};
+    for(const k in (ex.arrays||{})) this.mem[k]=ex.arrays[k].slice();
+    const names=new Set(Object.keys(ex.init||{})); let call=false;
+    for(const i of this.code){ if(i.op==='CALL') call=true; for(const a of i.args) if(typeof a==='string'){ const m=a.match(/\br\d+\b/g); if(m) m.forEach(x=>names.add(x)); } }
+    this.regNames=[...names].sort((a,b)=>+a.slice(1)-+b.slice(1)); if(call) this.regNames.push('ra');
+    for(const r of this.regNames) this.reg[r]=(ex.init&&ex.init[r])||0;
+    this.pc=0; this.out=null; this.halted=false; this.count=0; this.trace=[];
+  }
+  static rw(i){
+    const A=i.args, rs=[], ws=[];
+    if(ARITH[i.op]){ rs.push(A[0]); if(isReg(A[1])) rs.push(A[1]); ws.push(A[0]); }
+    else if(CMPB[i.op]){ rs.push(A[0]); if(isReg(A[1])) rs.push(A[1]); }
+    else switch(i.op){
+      case 'LI': ws.push(A[0]); break;
+      case 'MOV': rs.push(A[1]); ws.push(A[0]); break;
+      case 'BEQZ': rs.push(A[0]); break;
+      case 'LD': rs.push(/\[(\w+)\]/.exec(A[1])[1]); ws.push(A[0]); break;
+      case 'ST': rs.push(A[1]); if(A[0]!=='out') rs.push(/\[(\w+)\]/.exec(A[0])[1]); break;
+      case 'CALL': ws.push('ra'); break;
+      case 'RET': rs.push('ra'); break;
+    }
+    return {reads:rs,writes:ws};
+  }
+  step(){
+    if(this.halted) return null;
+    const pc=this.pc, i=this.code[pc], A=i.args, ev={pc,ins:i,reads:[],writes:[],old:{},oldOut:this.out,taken:false,mem:null,ex:'',wb:'',alu:['不用',''],target:null}; let next=pc+1, branch=false;
+    const R=x=>{ if(isReg(x)){ if(!ev.reads.includes(x)) ev.reads.push(x); return this.reg[x]; } return +x; };
+    const W=(r,v)=>{ ev.old[r]=this.reg[r]; this.reg[r]=v; ev.writes.push(r); };
+    const J=a=>{ next=a; ev.taken=true; };
+    if(ARITH[i.op]){
+      const a=R(A[0]), b=R(A[1]), s=ARITH[i.op], v=OPS[s](a,b);
+      ev.ex=A[0]+' '+s+' '+A[1]+'，也就是 '+a+' '+s+' '+b+' = '+v+'。'; ev.alu=[a+' '+s+' '+b,'= '+v]; W(A[0],v); ev.wb=v+' 寫回 '+A[0]+'，舊的值 '+a+' 被蓋掉。';
+    }else if(CMPB[i.op]){
+      const a=R(A[0]), b=R(A[1]), s=CMPB[i.op], t=s==='<'?a<b:s==='≥'?a>=b:a<=b; branch=true; ev.alu=[a+' '+s+' '+b,t?'成立':'不成立']; ev.target=A[2].addr;
+      ev.ex='比較 '+A[0]+' '+s+' '+A[1]+'：'+a+' '+s+' '+b+(t?'，成立。':'，不成立。'); if(t) J(A[2].addr);
+    }else switch(i.op){
+      case 'LI': ev.alu=['常數 '+A[1],'直通']; ev.ex='常數 '+A[1]+'。'; W(A[0],+A[1]); ev.wb=A[1]+' 寫進 '+A[0]+'。'; break;
+      case 'MOV': { const v=R(A[1]); ev.alu=[A[1]+' = '+v,'直通']; ev.ex=A[1]+' 的值是 '+v+'。'; W(A[0],v); ev.wb=v+' 寫進 '+A[0]+'。'; break; }
+      case 'BEQZ': { const v=R(A[0]); branch=true; ev.alu=[v+' 是不是 0',v===0?'成立':'不成立']; ev.target=A[1].addr; ev.ex=A[0]+' 是 '+v+(v===0?'，是 0，條件成立。':'，不是 0，條件不成立。'); if(v===0) J(A[1].addr); break; }
+      case 'JMP': ev.target=A[0].addr; ev.ex='無條件跳躍，不用算。'; J(A[0].addr); break;
+      case 'LD': { const m=/^(\w+)\[(\w+)\]$/.exec(A[1]), idx=R(m[2]), v=this.mem[m[1]][idx]; ev.mem={arr:m[1],idx,v}; ev.alu=[m[1]+' + '+idx,'算出 address']; ev.ex='從 memory 讀 '+m[1]+'['+idx+']，得到 '+v+'。'; W(A[0],v); ev.wb=v+' 寫進 '+A[0]+'。'; break; }
+      case 'ST': { const v=R(A[1]); ev.alu=[A[1]+' = '+v,'直通']; ev.ex=A[1]+' 的值是 '+v+'。';
+        if(A[0]==='out'){ this.out=v; ev.mem={out:true}; ev.wb=v+' 寫進 memory 的 out。'; }
+        else{ const m=/^(\w+)\[(\w+)\]$/.exec(A[0]), idx=R(m[2]); this.mem[m[1]][idx]=v; ev.mem={arr:m[1],idx,v,w:true}; ev.wb=v+' 寫進 memory 的 '+m[1]+'['+idx+']。'; }
+        break; }
+      case 'CALL': ev.alu=['PC + 1','= '+pad2(pc+1)]; ev.target=A[0].addr; ev.ex='回來的 address 是 '+pad2(pc+1)+'。'; W('ra',pc+1); J(A[0].addr); ev.wb=pad2(pc+1)+' 記在 ra。'; break;
+      case 'RET': { const v=R('ra'); ev.alu=['ra = '+pad2(v),'直通']; ev.target=v; ev.ex='ra 裡記著 '+pad2(v)+'。'; J(v); break; }
+      default: this.halted=true; next=pc; ev.ex='停機。'; ev.wb='out 裡是 '+this.out+'。';
+    }
+    if(!this.halted) ev.wb+=(ev.taken?'PC 跳到 ':branch?'PC 往下走到 ':'PC 指到 ')+pad2(next)+'。';
+    this.pc=next; this.count++; ev.next=next; this.trace.push(pc); return ev;
+  }
+}
+
+// 八個測試。每個測試可以產生任意大小的版本：gen(n) 回傳左邊的 asm 與右邊的起始圖。
+const PAT=[900,1200,300,1500,700,1000,450,2000], feeOf=x=>x>=1000?x-100:x+60, seq=(n,f)=>Array.from({length:n},(_,i)=>f(i));
+const FEE_ASM=`
+fee:   BLT  r3, 1000, small
+       SUBI r3, 100
+       RET
+small: ADDI r3, 60
+       RET`;
+const loopFee=n=>`
+loop:  BGE  r1, ${n}, end
+       LD   r3, orders[r1]
+       CALL fee
+       ADD  r2, r3
+       ADDI r1, 1
+       JMP  loop
+end:   ST   out, r2
+       HALT`+FEE_ASM;
+const TESTS=[
+ {key:'fanout',kind:'win',short:'切得開的工作',unit:'筆訂單',sizes:[4,8,16,32],n0:8,mode0:'t4',series:['vn','t1','t4'],table:['vn','t1','t2','t4','par'],xlabel:'訂單筆數',
+  what:'很多筆資料，每一筆的計算互不相干，最後才合在一起。',
+  verdict:'右邊贏，資料越多贏越多，前提是 tile 夠多。',
+  why:[['工作的形狀','一個迴圈，一筆做完才做下一筆。時間跟筆數成正比。','tree 每往下一層，同時在算的份數加倍。時間只跟 tree 的層數有關。'],
+       ['多出來的硬體','一個 core 就是一條 pipeline，再多 core 也要改寫成多個 thread 才用得上。','工作自己往鄰居的 tile 擴散，程式不用改。'],
+       ['只有 1 個 tile 呢','—','還是比左邊快一些。這些互不相干的對可以在同一個 tile 的四個階段裡疊著做，而左邊每筆訂單都有一個難猜的分支。可是時間仍然跟筆數成正比。']],
+  gen(n){ const xs=seq(n,i=>PAT[i%8]);
+    return {key:'fanout',short:'切得開的工作',title:n+' 筆訂單各算應付金額，再全部加起來',answer:xs.reduce((s,x)=>s+feeOf(x),0),
+      src:['// '+n+' 筆訂單，兩兩一組排成 tree','pay(一筆訂單 x)  =  x >= 1000 ? x - 100 : x + 60','pay(一組 a, b)   =  pay(a) + pay(b)','total = pay(全部)'],
+      note:'每一筆的應付金額只跟它自己有關，誰先算都可以。',
+      init:{r1:0,r2:0},arrays:{orders:xs},asm:loopFee(n),
+      main:(B,out)=>{ const t=a=>a.length===1?B.num(a[0]):B.tree(t(a.slice(0,a.length/2)),t(a.slice(a.length/2))); B.link(B.fn('pay',t(xs)),out); },
+      vnHow:'訂單是 memory 裡的 array。一個迴圈一筆一筆做：讀出來、<code>CALL</code> fee、加進 total。',
+      inHow:'訂單是 tree 的葉子，「組」把兩份併在一起。pay 從最上面那個「組」開始，每碰到一個「組」就分成兩個 pay，各自往下。'}; }},
+ {key:'chains',kind:'win',short:'幾條不相干的迴圈',unit:'串',sizes:[1,2,4,8,16],n0:4,mode0:'t2',series:['vn','t1','t4'],table:['vn','t1','t2','t4','par'],xlabel:'有幾串',
+  what:'好幾個迴圈，各算各的，互相不需要對方的結果。',
+  verdict:'右邊贏。串數越多差距越大，而且不用把程式改成多個 thread。',
+  why:[['幾個迴圈怎麼排','只能排隊：第一串加完才輪到第二串。時間跟串數成正比。','每一串各自是一條鏈，同時往前走。時間只看最長的那一串。'],
+       ['需要幾個 tile','—','一個 tile 每個 cycle 能開始一對。串數少的時候 1 個 tile 就疊得下；串數多了才需要更多 tile。'],
+       ['單看其中一串','一圈五道 instruction，大約五個 cycle。','每走一格要等上一格接好線，一格四個 cycle，回頭相加再四個 cycle。單一串並沒有比較快。']],
+  gen(k){ const ls=seq(k,i=>[120+10*i,80+5*i,200-10*(i%4)]), flat=[].concat(...ls);
+    return {key:'chains',short:'幾條不相干的迴圈',title:k+' 串數字各自加總，最後合計',answer:flat.reduce((s,x)=>s+x,0),
+      src:['// '+k+' 串數字，每串 3 個','每一串：  s = sum(這一串)        // 各串互不相干','total = 所有的 s 加起來'],
+      note:'每一串的加總只需要自己那三個數字。',
+      init:{r1:0,r2:0},arrays:{v:flat},asm:`
+loop: BGE  r1, ${3*k}, end
+      LD   r3, v[r1]
+      ADD  r2, r3
+      ADDI r1, 1
+      JMP  loop
+end:  ST   out, r2
+      HALT`,
+      main:(B,out)=>{ const c=a=>a.length===1?B.fn('sum',B.list(a[0])):B.op('+',c(a.slice(0,a.length>>1)),c(a.slice(a.length>>1))); B.link(c(ls),out); },
+      vnHow:k+' 串數字在 memory 裡連著放。左邊最自然的寫法是一個迴圈從頭加到尾，一次一個。',
+      inHow:'每一串是一條 list，上面各接一個 sum。'+(k>1?'各串的結果再用 + 兩兩合起來。':'')+'sum 沿著自己那一串往下走，不用等別串。'}; }},
+ {key:'stream',kind:'win',short:'兩段處理串起來',unit:'筆訂單',sizes:[2,4,8,16],n0:4,mode0:'t1',series:['vn','vnAlt','t1'],table:['vn','vnAlt','t1','t2','t4'],xlabel:'訂單筆數',
+  what:'第一段的輸出是第二段的輸入。第二段要不要等第一段全部做完？',
+  verdict:'右邊贏過照樣寫的左邊，和手動合併迴圈之後的左邊差不多。',
+  why:[['兩段怎麼接','第一段跑完整個迴圈，結果存進新的 array；第二段再從頭讀一遍。','map 每碰到一格，先交出新 list 的一格。sum 馬上接手這一格，不必等 map 走完。'],
+       ['中間的資料','要一塊跟輸入一樣大的 memory 放中間結果。','中間的 list 一格一格產生，馬上被 sum 換掉，圖上同時只存在一兩格。'],
+       ['左邊能不能一樣快','可以，把兩個迴圈手動合成一個。圖上的紅色虛線就是合併之後的結果。','不用改寫，兩個函式照原樣串起來就有這個效果。']],
+  gen(n){ const xs=seq(n,i=>PAT[i%8]);
+    return {key:'stream',short:'兩段處理串起來',title:'先算每筆的應付金額，再加總（'+n+' 筆）',answer:xs.reduce((s,x)=>s+feeOf(x),0),
+      src:['ys    = map(fee, xs)       // 第一段：每一筆算應付金額','total = sum(ys)            // 第二段：全部加起來'],
+      note:'兩個各自獨立的函式，前一個的輸出接到後一個的輸入。',
+      init:{r1:0,r2:0},arrays:{xs,ys:xs.map(()=>0)},asm:`
+p1:    BGE  r1, ${n}, p2s
+       LD   r3, xs[r1]
+       CALL fee
+       ST   ys[r1], r3
+       ADDI r1, 1
+       JMP  p1
+p2s:   LI   r1, 0
+p2:    BGE  r1, ${n}, end
+       LD   r3, ys[r1]
+       ADD  r2, r3
+       ADDI r1, 1
+       JMP  p2
+end:   ST   out, r2
+       HALT`+FEE_ASM,
+      alt:{init:{r1:0,r2:0},arrays:{orders:xs},asm:loopFee(n)},
+      main:(B,out)=>B.link(B.fn('sum',B.fn('mapfee',B.list(xs))),out),
+      vnHow:'照程式的寫法分兩趟：第一個迴圈把結果寫進 ys，第二個迴圈再把 ys 加起來。',
+      inHow:'list 上面接著 map，map 上面接著 sum。map 交出一格，sum 就把它換成一個 +；fee 還在算的時候，後面的格子已經繼續往下走。'}; }},
+ {key:'branch',kind:'win',short:'難猜的分支',unit:'筆訂單',sizes:[4,8,16,32],n0:6,mode0:'t1',series:['vn','vnEasy','t1'],table:['vn','vnEasy','t1','t2'],xlabel:'訂單筆數',
+  what:'分支往哪邊走要看資料，而且沒有規律。',
+  verdict:'右邊小贏。它沒有白做的工作，時間也不受資料有沒有規律影響。',
+  why:[['分支怎麼處理','還沒算出條件就先猜一邊，繼續往下抓。猜對不花時間；猜錯，後面兩道作廢。','if 在條件值到達之前不在 queue 裡，不會被做。沒有猜，也就沒有作廢。'],
+       ['資料沒規律時','每次都猜錯，一次賠兩個 cycle。圖上實線（難猜）比紅色虛線（好猜）高出來的部分就是白做的。','好猜和難猜的資料，做的 interaction 一模一樣，時間也一樣。'],
+       ['贏多少','資料好猜的時候，分支幾乎不花時間，和右邊差不多。','每一筆都要等條件算出來才能往下，所以贏得不多。']],
+  gen(n,easy){ const xs=seq(n,i=>easy?[900,300,700,450][i%4]:(i%2?[1200,1500,2000][(i>>1)%3]:[900,300,700][(i>>1)%3]));
+    return {key:'branch',short:'難猜的分支',title:n+' 筆訂單，滿千和未滿千交錯出現',answer:xs.reduce((s,x)=>s+feeOf(x),0),
+      src:['total = 0','for (x of orders)             // 滿千、未滿千交錯','    total += fee(x)','','fee(x):  if (x >= 1000) return x - 100','         else           return x + 60'],
+      note:'fee 裡的 if 這一次成立、下一次不成立，一直交替。',
+      init:{r1:0,r2:0},arrays:{orders:xs},asm:loopFee(n),
+      main:(B,out)=>B.link(B.fn('total',B.list(xs)),out),
+      vnHow:'fee 在 08 到 12。<code>BLT</code> 每次的方向都和上次相反，預測表一直猜錯，後面抓進來的兩道就標上 ✕。',
+      inHow:'Σ 沿著 list 走，每一格放一個 fee。fee 裡的 if 等「≥1000」的結果到了才動，不管結果是哪一邊都一樣。'}; }},
+ {key:'chain',kind:'lose',short:'一條相依鏈',unit:'次',sizes:[2,4,8,16],n0:4,mode0:'t1',series:['vn','t1','t4'],table:['vn','t1','t2','t4','par'],xlabel:'重複幾次',
+  what:'每一步都要用到上一步的結果，沒有任何兩件事可以同時做。',
+  verdict:'右邊輸，而且加 tile 完全沒有幫助。',
+  why:[['為什麼疊不起來','前後相依的 instruction 靠 forwarding 一個 cycle 進一道。','下一對要等上一對接好線才存在。「×3」做完，「+1」才能開始，中間各要四個階段。'],
+       ['加硬體','—','圖的寬度永遠是 1 到 2，多的 tile 全部在睡。圖上 1 個 tile 和 16 個 tile 的線疊在一起。'],
+       ['每一步的成本','MULI、ADDI 各一道 instruction。','「×3」「+1」各一次 interaction，再加上 loop 自己和「−1」。']],
+  gen(n){ let x=1; for(let i=0;i<n;i++) x=x*3+1;
+    return {key:'chain',short:'一條相依鏈',title:'同一個數字連續算 '+n+' 次',answer:x,
+      src:['x = 1','重複 '+n+' 次：  x = x * 3 + 1        // 每一次都要上一次的 x'],
+      note:'1 → 4 → 13 → 40 → 121 …，後一個一定要等前一個。',
+      init:{r1:n,r2:1},asm:`
+loop: BEQZ r1, end
+      MULI r2, 3
+      ADDI r2, 1
+      SUBI r1, 1
+      JMP  loop
+end:  ST   out, r2
+      HALT`,
+      main:(B,out)=>B.link(B.fn('iter',B.num(n),B.num(1)),out),
+      vnHow:'n 在 r1，x 在 r2。迴圈每一圈 <code>MULI</code>、<code>ADDI</code>，兩道都讀寫同一個 r2。',
+      inHow:'loop 的 principal port 接著 n，另一個 port 接著 x。每一圈長出「×3」和「+1」，一個接一個串在 x 這條線上。'}; }},
+ {key:'lookup',kind:'lose',short:'直接拿第 k 筆',unit:'（k）',sizes:[1,3,7,15],n0:3,mode0:'t1',series:['vn','t1','t4'],table:['vn','t1','t2','t4','par'],xlabel:'要拿第幾筆（k）',
+  what:'知道位置，直接去拿那一筆資料。',
+  verdict:'右邊輸很多。左邊一道 instruction，右邊要從頭一格一格走。',
+  why:[['怎麼找到那一筆','address 算一下就到：base 加 k，一道 LD。跟 k 多大無關。','沒有 address，只有誰接著誰。要拿第 k 格，只能從第一格沿著 wire 走 k 次。'],
+       ['其他用不到的資料','留在 memory 裡不用管。','走過的每一格、沒走到的每一格，都要交給 ε 丟掉。'],
+       ['有沒有補救','—','把 list 換成 tree，可以從 k 步降到 log k 步，還是比不上直接算 address。']],
+  gen(k){ const xs=seq(k+2,i=>PAT[i%8]);
+    return {key:'lookup',short:'直接拿第 k 筆',title:'從 '+(k+2)+' 筆裡直接拿第 '+k+' 筆',answer:xs[k],
+      src:['xs = ['+(xs.length>8?xs.slice(0,6).join(', ')+', …':xs.join(', '))+']','x  = xs['+k+']                 // 從 0 開始數'],
+      note:'只要其中一筆，其他的都用不到。',
+      init:{r2:k},arrays:{xs},asm:`
+      LD   r1, xs[r2]
+      ST   out, r1
+      HALT`,
+      main:(B,out)=>B.link(B.fn('nth',B.num(k),B.list(xs)),out),
+      vnHow:'k 在 r2。<code>LD</code> 用 xs 的起點加上 k 當 address，一次讀到。',
+      inHow:'nth 的 principal port 接著 k，另一個 port 接著 list。k 不是 0 就丟掉一格、k 減一；k 是 0 才把現在這一格交出去。'}; }},
+ {key:'share',kind:'lose',short:'同一份資料用兩次',unit:'筆',sizes:[2,4,8,16],n0:4,mode0:'t2',series:['vn','t1','t4'],table:['vn','t1','t2','t4','par'],xlabel:'訂單筆數',
+  what:'兩個函式都要讀同一份資料。',
+  verdict:'右邊輸。資料要先複製一份，用不到的部分還要丟掉。',
+  why:[['兩個人用同一份','兩個 pointer 指向同一塊 memory，再讀一次不花成本。這裡甚至不用另外算 len。','每條 wire 只有兩端，一個值只能給一個人。要先用 δ 一格一格複製成兩份。'],
+       ['多出來的工作','—','δ 複製每一格和每個數字；len 用不到金額，還要 ε 一個一個丟。這些都不是在算答案。'],
+       ['有沒有補救','—','改寫成一趟走完、邊加邊數，就不用複製。可是程式得照機器的脾氣寫。']],
+  gen(n){ const xs=seq(n,i=>[300,120,450,230,510,90,360,140][i%8]), sum=xs.reduce((s,x)=>s+x,0);
+    return {key:'share',short:'同一份資料用兩次',title:n+' 筆訂單的平均金額',answer:Math.floor(sum/n),
+      src:['xs  = ['+(xs.length>8?xs.slice(0,6).join(', ')+', …':xs.join(', '))+']','avg = sum(xs) / len(xs)      // 同一個 list 用兩次'],
+      note:'sum 和 len 都要走一遍同一個 list。',
+      init:{r1:0,r2:0},arrays:{xs},asm:`
+loop: BGE  r1, ${n}, end
+      LD   r3, xs[r1]
+      ADD  r2, r3
+      ADDI r1, 1
+      JMP  loop
+end:  DIV  r2, r1
+      ST   out, r2
+      HALT`,
+      main:(B,out)=>{ const d=B.dup(B.list(xs)); B.link(B.op('÷',B.fn('sum',d[0]),B.fn('len',d[1])),out); },
+      vnHow:'一個迴圈把 array 加完。迴圈結束時 i 就是筆數，直接 <code>DIV</code>。',
+      inHow:'list 先接到 δ，δ 的兩個 port 一個給 sum、一個給 len。δ 沿著 list 往下複製，sum 和 len 跟在後面。'}; }},
+ {key:'early',kind:'lose',short:'找到就停',unit:'筆',sizes:[4,8,16,32],n0:6,mode0:'t1',series:['vn','ans1','t1'],table:['vn','ans1','t1','t4'],xlabel:'list 有幾筆',
+  what:'在一串資料裡找第一筆符合條件的，找到就不用再看後面。',
+  verdict:'右邊輸。答案出來之後，後面沒看過的資料還要一格一格丟掉。',
+  why:[['找到之後','跳出迴圈就結束。後面的資料留在 memory 裡，一道 instruction 都不用花。','後面那一串還接在圖上，要交給 ε 丟掉。list 越長，丟得越久。'],
+       ['答案什麼時候出來','第二筆就找到，跟 list 多長無關。','答案出來的時間也跟長度無關（虛線）。可是整件事做完的時間跟長度成正比（實線）。'],
+       ['這算不算輸','—','如果只在乎答案，差距是固定的。如果在乎做了多少工作，丟棄是多出來的成本。']],
+  gen(n){ const xs=[900,1200].concat(seq(n-2,i=>PAT[(i+2)%8]));
+    return {key:'early',short:'找到就停',title:'在 '+n+' 筆裡找第一筆超過 1000 的',answer:1200,
+      src:['xs = ['+(xs.length>8?xs.slice(0,6).join(', ')+', …':xs.join(', '))+']','x  = xs 裡第一筆超過 1000 的     // 找到就停'],
+      note:'第二筆（1200）就符合，後面的都不用看。',
+      init:{r1:0},arrays:{xs},asm:`
+loop:  BGE  r1, ${n}, none
+       LD   r2, xs[r1]
+       BGE  r2, 1001, found
+       ADDI r1, 1
+       JMP  loop
+none:  LI   r2, 0
+found: ST   out, r2
+       HALT`,
+      main:(B,out)=>B.link(B.fn('find',B.list(xs)),out),
+      vnHow:'迴圈一筆一筆讀。<code>BGE r2, 1001</code> 成立就跳到 06，後面的 array 完全不碰。',
+      inHow:'find 沿著 list 走，每一格放一個「>1000」和 if。if 發現符合，就把這一筆接到結果，後面整串交給 ε。'}; }}
+];
+const EX=TESTS.map(t=>t.gen(t.n0));
+// 同一個測試換一個大小，各種做法要幾個 cycle
+const scaleCache=new Map();
+function scalePoint(test,n,key){
+  const ck=test.key+'|'+n+'|'+key; if(scaleCache.has(ck)) return scaleCache.get(ck);
+  const run=(ex,mode,g)=>{ const k2=test.key+'|'+n+'|run|'+(ex.tag||'')+mode+(g||''); if(!scaleCache.has(k2)) scaleCache.set(k2,measurePipe(ex,mode,g)); return scaleCache.get(k2); };
+  const ex=test.gen(n); let v;
+  switch(key){
+    case 'vn': v=run(ex,'tiles',1).vnCycles; break;
+    case 'vnAlt': v=run(Object.assign({},ex,ex.alt,{code:null,tag:'alt'}),'tiles',1).vnCycles; break;
+    case 'vnEasy': v=run(Object.assign(test.gen(n,true),{tag:'easy'}),'tiles',1).vnCycles; break;
+    case 't1': v=run(ex,'tiles',1).inCycles; break;
+    case 't2': v=run(ex,'tiles',2).inCycles; break;
+    case 't4': v=run(ex,'tiles',4).inCycles; break;
+    case 'par': v=run(ex,'par').inCycles; break;
+    case 'ans1': v=run(ex,'tiles',1).ansAt; break;
+  }
+  scaleCache.set(ck,v); return v;
+}
+
+class Sim{
+  constructor(ex,mode,grid){
+    this.ex=ex; this.mode=mode; this.grid=mode==='tiles'?(grid||1):1;
+    this.net=buildNet(ex); this.vn=new VN(ex);
+    this.tickN=0; this.phase=-1; this.rounds=0; this.firing=[]; this.widths=[]; this.steals=[];
+    this.lastFired=[]; this.seq=[]; this.maxNodes=this.net.agentCount(); this.forced=null; this.applyTick=-1;
+    this.vnCur=null; this.vnEvent=null; this.inActive=false;
+  }
+  get tiles(){ return this.grid*this.grid; }
+  // 途中的工作：每一件帶著自己走到第幾個階段（0 到 3）
+  vnItems(){ return this.vnCur?[{pc:this.vnCur.pc,ins:this.vnCur.ins,stage:this.phase,ev:this.vnEvent,squash:false}]:[]; }
+  inItems(){ return this.inActive?this.firing.map((p,i)=>({pair:p,stage:this.phase,fired:this.phase>=2?this.lastFired[i]:null,tile:p.tile})):[]; }
+  idle(){ return this.phase===-1||this.phase===3; }
+  inDone(){ return this.net.pairs.length===0&&(this.idle()||!this.inActive); }
+  done(){ return this.idle()&&this.net.pairs.length===0&&this.vn.halted; }
+  canPick(){ return this.mode==='seq'&&this.idle()&&this.net.pairs.length>0; }
+  neighbors(t){ const g=this.grid,x=t%g,y=(t/g)|0,r=[]; if(x>0)r.push(t-1); if(x<g-1)r.push(t+1); if(y>0)r.push(t-g); if(y<g-1)r.push(t+g); return r; }
+  startRound(){
+    const ps=this.net.pairs; this.steals=[]; let fire=[];
+    if(this.mode==='par') fire=ps.slice();
+    else if(this.mode==='seq'){ let p=this.forced!=null?ps.find(q=>q.id===this.forced):null; if(!p) p=ps[ps.length-1]; fire=[p]; }
+    else{
+      const T=this.tiles, q=[]; for(let t=0;t<T;t++) q.push([]);
+      for(const p of ps) q[p.tile].push(p);
+      const spare=q.map(a=>a.slice(0,Math.max(0,a.length-1)));
+      for(let t=0;t<T;t++) if(q[t].length) fire.push(q[t][q[t].length-1]);
+      for(let t=0;t<T;t++) if(!q[t].length){
+        let best=-1; for(const u of this.neighbors(t)) if(spare[u].length&&(best<0||spare[u].length>spare[best].length)) best=u;
+        if(best>=0){ const p=spare[best].shift(); p.tile=t; this.net.nodes.get(p.f).owner=t; this.net.nodes.get(p.c).owner=t; this.steals.push({from:best,to:t,pair:p.id}); }
+      }
+    }
+    this.forced=null; this.firing=fire; this.widths.push(fire.length); this.rounds++;
+  }
+  apply(){
+    const net=this.net; if(net.fresh.size>4000) net.fresh.clear(); net.clock=this.tickN; this.applyTick=this.tickN; this.lastFired=[];
+    for(const p of this.firing){ const r=net.fire(p); this.lastFired.push(r); this.seq.push(r.name); }
+    this.maxNodes=Math.max(this.maxNodes,net.agentCount());
+  }
+  // 一個 step 分四拍：左邊 fetch / decode / execute / write back，右邊 對上 / 拆掉 / 長出 / 接好
+  tick(){
+    if(this.done()) return false;
+    this.tickN++;
+    if(this.idle()){
+      this.vnCur=this.vn.halted?null:{pc:this.vn.pc,ins:this.vn.code[this.vn.pc]}; this.vnEvent=null;
+      if(this.net.pairs.length){ this.startRound(); this.inActive=true; } else{ this.firing=[]; this.lastFired=[]; this.inActive=false; }
+      this.phase=0;
+    }else{
+      this.phase++;
+      if(this.phase===2){ if(this.vnCur) this.vnEvent=this.vn.step(); if(this.inActive) this.apply(); }
+    }
+    return true;
+  }
+}
+// pipeline 版：每個 cycle 兩邊所有途中的工作各前進一個階段，並各自開始新的工作
+// 左邊：四級 pipeline，分支在 execute 才決定，先猜不跳，猜錯就把後面兩道作廢；register 的相依靠 forwarding
+// 右邊：每個 tile 每個 cycle 可以從 queue 取一對新的；新的 active pair 要等接好線之後才能取
+class PipeSim extends Sim{
+  constructor(ex,mode,grid){
+    super(ex,mode,grid); this.pipe=true; this.phase=3; this.slots=[null,null,null,null]; this.fetchPC=0; this.flight=[];
+    this.vnLog=[]; this.inLog=[]; this.vnBubbles=0; this.vnCycles=0; this.vnMiss=0; this.bht={}; this.ras=0; this.stopFetch=false; this.ansAt=null; this.vnAnsAt=null; this.work={};
+  }
+  vnItems(){ return this.slots.filter(Boolean); }
+  inItems(){ return this.flight; }
+  idle(){ return true; }
+  canFetch(){ return !this.vn.halted&&!this.stopFetch&&this.fetchPC<this.vn.code.length; }
+  vnBusy(){ return this.slots.some(Boolean)||this.canFetch(); }
+  inDone(){ return this.net.pairs.length===0&&this.flight.length===0; }
+  done(){ return this.inDone()&&!this.vnBusy(); }
+  canPick(){ return false; }
+  tick(){
+    if(this.done()) return false;
+    const t=++this.tickN, vn=this.vn, S=this.slots, net=this.net;
+    // 左邊：整條 pipeline 往前移一格，抓一道新的，execute 那一格真的執行
+    if(this.vnBusy()){
+      for(let i=3;i>0;i--){ const r=S[i-1]; S[i]=r&&!r.squash?r:null; if(S[i]) S[i].stage=i; }
+      S[0]=null;
+      if(this.canFetch()){
+        // 抓的時候就先猜下一道：JMP、CALL、RET 的目標抓得到；條件分支查一張 2-bit 的預測表
+        const pc=this.fetchPC, ins=vn.code[pc], cond=!!CMPB[ins.op]||ins.op==='BEQZ'; let pred=pc+1;
+        if(ins.op==='JMP'||ins.op==='CALL') pred=ins.args[0].addr; else if(ins.op==='RET') pred=this.ras;
+        else if(cond&&(this.bht[pc]==null?1:this.bht[pc])>=2) pred=ins.args[ins.args.length-1].addr;
+        if(ins.op==='CALL') this.ras=pc+1; if(ins.op==='HALT') this.stopFetch=true;
+        S[0]={pc,ins,stage:0,ev:null,squash:false,uid:this.vnLog.length,pred,cond,miss:false};
+        this.vnLog.push({label:pad2(pc)+' '+ins.text.replace(/\s+/,' '),start:t,kill:0}); this.fetchPC=pred;
+      }
+      const x=S[2];
+      if(x){ if(vn.pc!==x.pc) throw new Error('pipeline off path'); const ev=vn.step(); x.ev=ev;
+        if(x.cond){ const c=this.bht[x.pc]==null?1:this.bht[x.pc]; this.bht[x.pc]=ev.taken?Math.min(3,c+1):Math.max(0,c-1); }
+        if(ev.mem&&ev.mem.out) this.vnAnsAt=t;
+        if(!vn.halted&&ev.next!==x.pred){ x.miss=true; this.vnMiss++; for(const j of [0,1]) if(S[j]){ S[j].squash=true; this.vnLog[S[j].uid].kill=t; this.vnBubbles++; } this.fetchPC=ev.next; this.stopFetch=false; } }
+      this.vnCur=x?{pc:x.pc,ins:x.ins}:null; this.vnEvent=x?x.ev:null; this.vnCycles=t;
+    }else{ this.vnCur=null; this.vnEvent=null; }
+    // 右邊：途中的每一對往前一個階段，走到「長出」時真的改寫
+    if(net.fresh.size>4000) net.fresh.clear();
+    net.clock=t; this.applyTick=t;
+    this.flight=this.flight.filter(it=>it.stage<3);
+    for(const it of this.flight){ it.stage++; if(it.stage===2){ it.fired=net.fire(it.pair); this.seq.push(it.fired.name); this.work[it.fired.rule]=(this.work[it.fired.rule]||0)+1; } }
+    if(this.ansAt==null){ const r=net.out.ports[0], n=r&&net.nodes.get(r.n); if(n&&n.type==='NUM'&&r.p===0) this.ansAt=t; }
+    this.maxNodes=Math.max(this.maxNodes,net.agentCount());
+    const ready=net.pairs.filter(p=>!p.fly&&p.born<=t-2), start=[]; this.steals=[];
+    if(this.mode==='par') start.push(...ready);
+    else if(this.mode==='seq'){ if(ready.length) start.push(ready[ready.length-1]); }
+    else{
+      const T=this.tiles, q=[]; for(let k=0;k<T;k++) q.push([]);
+      for(const p of ready) q[p.tile].push(p);
+      for(let k=0;k<T;k++) if(q[k].length) start.push(q[k].pop());
+      const busy=new Set(this.flight.map(it=>it.tile)); for(const p of start) busy.add(p.tile);
+      for(let k=0;k<T;k++) if(!busy.has(k)){
+        let best=-1; for(const u of this.neighbors(k)) if(q[u].length&&(best<0||q[u].length>q[best].length)) best=u;
+        if(best>=0){ const p=q[best].shift(); p.tile=k; net.nodes.get(p.f).owner=k; net.nodes.get(p.c).owner=k; p.born=t-1; this.steals.push({from:best,to:k,pair:p.id}); }
+      }
+    }
+    for(const p of start){ p.fly=true; this.flight.push({pair:p,stage:0,tile:p.tile,fired:null}); this.inLog.push({label:describe(net,p).name,start:t,kill:0}); }
+    this.inActive=this.flight.length>0; this.firing=this.flight.filter(it=>it.stage<=1).map(it=>it.pair); this.lastFired=this.flight.filter(it=>it.fired).map(it=>it.fired);
+    if(this.flight.length){ this.widths.push(this.flight.length); this.rounds=t; }
+    return true;
+  }
+}
+function measurePipe(ex,mode,grid){
+  const s=new PipeSim(ex,mode,grid); let g=0; while(s.tick()&&g++<200000);
+  return {vnCycles:s.vnCycles,inCycles:s.rounds,bubbles:s.vnBubbles,miss:s.vnMiss,interactions:s.net.interactions,vnSteps:s.vn.count,value:s.net.result().value,out:s.vn.out,left:s.net.agentCount(),ansAt:s.ansAt,vnAnsAt:s.vnAnsAt,work:s.work};
+}
+function measure(ex,mode,grid){
+  const s=new Sim(ex,mode,grid); let g=0; while(s.tick()&&g++<200000);
+  return {rounds:s.rounds,interactions:s.net.interactions,vnSteps:s.vn.count,maxWidth:Math.max(0,...s.widths),value:s.net.result().value,out:s.vn.out,left:s.net.agentCount(),maxNodes:s.maxNodes};
+}
+/*ENGINE-END*/
+// ───────── helpers
+const $=s=>document.querySelector(s);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const vadd=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const vsub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const vmul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
+const vdot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const vcross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const vlen=a=>Math.hypot(a[0],a[1],a[2]);
+const vnorm=a=>{ const l=vlen(a); return l<1e-6?[0,1,0]:[a[0]/l,a[1]/l,a[2]/l]; };
+const anyPerp=d=>vnorm(Math.abs(d[1])<0.9?vcross(d,[0,1,0]):vcross(d,[1,0,0]));
+const easeOut=t=>1-(1-t)*(1-t);
+const easeBack=t=>{ const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); };
+const reduced=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const SANS='"IBM Plex Sans","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif';
+const MONO='"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace';
+
+// ───────── theme colors for canvas
+const TOK=['bg','surface','surface-2','ink','muted','line','vn','inet','hot','c-s','c-z','c-add','c-mul','c-dup','c-era','box','box-2','floor'];
+const C={};
+function hex(h){ h=h.trim(); if(h.length===4) h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3]; return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]; }
+function readTheme(){ const cs=getComputedStyle(document.documentElement); for(const t of TOK){ const v=cs.getPropertyValue('--'+t); if(v&&v.trim()[0]==='#') C[t]=hex(v); } C.dark=(C.bg[0]+C.bg[1]+C.bg[2])<380; }
+const rgb=(c,a)=>a==null?'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')':'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+const mixc=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+const WHITE=[255,255,255], BLACK=[0,0,0];
+function hsl(h,s,l){ const a=s*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)); }; return [f(0)*255,f(8)*255,f(4)*255]; }
+const tileColor=t=>hsl((t*137.5+205)%360,0.68,C.dark?0.62:0.5);
+readTheme();
+if(window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});
+const TYPE={NUM:'c-s',OP:'c-add',OP1:'c-add',FN:'c-mul',DUP:'c-dup',ERA:'c-era',CONS:'c-z',NIL:'c-z',NODE:'c-z',OUT:'ink'};
+const NODE_INFO={
+  NUM:'<b>數字</b>：只有一個 principal port，接著要用這個數字的人。沒有 address，也不能覆寫。',
+  OP:'<b>運算 node</b>（+ − × ÷）：principal port 接第一個運算元。兩個 auxiliary port 一個接第二個運算元，一個接結果的去處。',
+  OP1:'<b>已經有一個運算元的運算 node</b>：principal port 接還沒到的那個運算元，auxiliary port 接結果的去處。「≥1000」「×2」這種寫在程式裡的常數，一開始就是這個樣子。',
+  FN:'<b>函式或分支 node</b>：principal port 接它要判斷的資料，其餘的 port 接參數與結果的去處。資料到了，才照規則換成函式的那張圖。',
+  DUP:'<b>δ</b>（duplicator）：principal port 接要複製的值，兩個 auxiliary port 各接一份副本的去處。',
+  ERA:'<b>ε</b>（eraser）：只有一個 principal port，接要丟掉的值。',
+  CONS:'<b>list 的一格</b>（::）：principal port 朝向使用這個 list 的人，兩個 auxiliary port 一個接這一格的內容，一個接後面那一串。',
+  NIL:'<b>list 的結尾</b>（[ ]）：只有一個 principal port。',
+  NODE:'<b>一組</b>（組）：tree 的分岔。principal port 朝向使用它的人，兩個 auxiliary port 各接一半。',
+  OUT:'<b>結果的出口</b>：整張圖唯一對外的 wire。計算結束時，這裡接著一個數字。'
+};
+const CARDS=[
+  {k:'OP',name:'運算 ⋈ 數字',eq:'拿到第一個運算元',make:'+ 記住 a，變成「a+」，principal port 轉去等第二個運算元。',vn:'把一個運算元讀進 ALU'},
+  {k:'OP1',name:'「a+」⋈ 數字',eq:'兩個運算元到齊，算出結果',make:'兩個 node 換成一個數字，交給等結果的人。比較也是這樣做，結果是 1 或 0。',vn:'ADD、SUB、MUL 這類 instruction 的 execute'},
+  {k:'FN',name:'函式 ⋈ 資料',eq:'分支與呼叫',make:'principal port 碰到的資料決定套哪一條規則：0 或非 0、list 的一格或結尾。函式 node 換成那條規則的圖，參數與結果的 wire 接上去。',vn:'BEQZ、BLT 這類分支，加上 CALL 與 RET'},
+  {k:'DUPN',name:'δ ⋈ 數字',eq:'複製一個數字',make:'一個數字變成兩個，各給一邊。',vn:'MOV，或者再讀一次同一個 register'},
+  {k:'DUPC',name:'δ ⋈ list 的一格',eq:'複製一格，再往下複製',make:'放進兩個新的格子，再放兩個 δ 去複製這一格的內容和後面那一串。',vn:'多一個 pointer 指向同一塊 memory，不必複製'},
+  {k:'ERA',name:'ε ⋈ 資料',eq:'丟掉一個 node，再往下丟',make:'數字和 list 的結尾直接消失。list 的一格消失之後，放兩個 ε 繼續丟它的內容和後面那一串。',vn:'沒有對應的 instruction，舊值留著等覆寫或 garbage collector'}
+];
+const ISA=[
+  ['LI','LI rd, n','把常數 n 放進 rd'],
+  ['MOV','MOV rd, rs','把 rs 的值複製到 rd'],
+  ['ADD SUB MUL DIV','ADD / SUB / MUL / DIV rd, rs','rd 與 rs 運算，結果寫回 rd'],
+  ['ADDI SUBI MULI','ADDI / SUBI / MULI rd, n','rd 與常數 n 運算，結果寫回 rd'],
+  ['BEQZ','BEQZ r, addr','r 是 0 就把 PC 設成 addr，否則往下'],
+  ['BLT BGE BLE','BLT / BGE / BLE a, b, addr','比較 a 與 b（<、≥、≤），成立就把 PC 設成 addr'],
+  ['JMP','JMP addr','把 PC 設成 addr'],
+  ['LD','LD rd, arr[ri]','從 memory 讀 array 的第 ri 格，放進 rd'],
+  ['ST','ST out, r','把 r 的值寫進 memory 的 out'],
+  ['CALL','CALL addr','把下一道的 address 記在 ra，PC 設成 addr'],
+  ['RET','RET','把 PC 設成 ra 記的 address'],
+  ['HALT','HALT','停機']
+];
+const KIND={win:'右邊有好處',lose:'右邊沒辦法'};
+const AT={fanout:n=>n+' 筆訂單',chains:n=>n+' 串',stream:n=>n+' 筆訂單',branch:n=>n+' 筆訂單',chain:n=>'重複 '+n+' 次',lookup:n=>'拿第 '+n+' 筆',share:n=>n+' 筆訂單',early:n=>'list 有 '+n+' 筆'};
+const PHASES=[
+  ['fetch','從 memory 取出 PC 指的那一道 instruction','PC → memory → CPU','對上','找到一對 principal port 相接的 node','scheduler → work queue → node memory'],
+  ['decode','看 opcode，知道要讀寫哪些 register','CPU 裡的 decoder','拆掉','兩個 node 的種類決定規則，這兩格釋放','node memory → 規則表'],
+  ['execute','算出結果或做比較','register → CPU 裡的 ALU；LD 另外讀 memory','長出','照規則配置新的 node，有算術就算','規則表 → engine → node memory'],
+  ['write back','結果寫回 register，PC 換到下一道','CPU → register；PC 換成下一個 address','接好','把 port 寫好，新的 active pair 放進 queue','engine → node memory → work queue']
+];
+const MODES={seq:{label:'一次一個',mode:'seq'},par:{label:'能做的全做',mode:'par'},t1:{label:'1 個 tile',mode:'tiles',g:1},t2:{label:'4 個 tile',mode:'tiles',g:2},t3:{label:'9 個 tile',mode:'tiles',g:3},t4:{label:'16 個 tile',mode:'tiles',g:4}};
+
+const CHAPTERS=TESTS.map((t,i)=>({title:t.short,ex:i,mode:t.mode0,modes:['t1','t2','t4','par'],extra:'scale',pipe:true,tilesCh:true,lede:t.what,rows:t.why,test:t,
+  tryit:'按「走一個 cycle」或「連續播放」看兩邊怎麼做，下面的時序圖會跟著畫。再下面那張圖，是同一個測試把資料放大之後，各種做法要幾個 cycle。'}));
+
+// ───────── 3D view
+const focalOf=v=>1.15*Math.min(v.w,v.h*1.2);
+function makeView(canvas,opt){
+  const v=Object.assign({canvas,ctx:canvas.getContext('2d'),w:10,h:10,dpr:1,zoom:1,target:[0,0,0],az:0.5,el:0.3,dist:14,lastUser:-1e9,elMin:-0.25,elMax:1.25},opt);
+  v.home={az:v.az,el:v.el};
+  v.fit=()=>{ const r=canvas.getBoundingClientRect(); if(!r.width||!r.height) return; v.dpr=Math.min(window.devicePixelRatio||1,2); v.w=r.width; v.h=r.height; const W=Math.round(v.w*v.dpr), H=Math.round(v.h*v.dpr); if(canvas.width!==W||canvas.height!==H){ canvas.width=W; canvas.height=H; } };
+  if(window.ResizeObserver) new ResizeObserver(v.fit).observe(canvas);
+  window.addEventListener('resize',v.fit); v.fit();
+  v.update=()=>{
+    v.el=clamp(v.el,v.elMin,v.elMax); if(v.azMax!=null) v.az=clamp(v.az,v.azMin,v.azMax);
+    const ce=Math.cos(v.el),se=Math.sin(v.el),ca=Math.cos(v.az),sa=Math.sin(v.az),d=v.dist/v.zoom;
+    v.cam=[v.target[0]+d*ce*sa,v.target[1]+d*se,v.target[2]+d*ce*ca];
+    v.f=[-ce*sa,-se,-ce*ca]; v.r=[ca,0,-sa]; v.u=[-se*sa,ce,-se*ca]; v.focal=focalOf(v);
+  };
+  v.project=p=>{ const dx=p[0]-v.cam[0],dy=p[1]-v.cam[1],dz=p[2]-v.cam[2]; const z=dx*v.f[0]+dy*v.f[1]+dz*v.f[2]; if(z<0.3) return null; const s=v.focal/z; return [v.w/2+(dx*v.r[0]+dy*v.r[1]+dz*v.r[2])*s,v.h/2-(dx*v.u[0]+dy*v.u[1]+dz*v.u[2])*s,z,s]; };
+  let drag=null;
+  canvas.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,az:v.az,el:v.el,moved:false,id:e.pointerId}; try{canvas.setPointerCapture(e.pointerId);}catch(_){} });
+  canvas.addEventListener('pointermove',e=>{ if(!drag||drag.id!==e.pointerId) return; const dx=e.clientX-drag.x,dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>6) drag.moved=true; if(drag.moved){ v.az=drag.az-dx*0.008; v.el=drag.el+dy*0.006; v.lastUser=performance.now(); } });
+  canvas.addEventListener('pointerup',e=>{ if(drag&&!drag.moved&&v.onTap){ const r=canvas.getBoundingClientRect(); v.onTap(e.clientX-r.left,e.clientY-r.top); } drag=null; });
+  canvas.addEventListener('pointercancel',()=>{ drag=null; });
+  canvas.addEventListener('wheel',e=>{ if(e.ctrlKey){ e.preventDefault(); v.zoom=clamp(v.zoom*Math.exp(-e.deltaY*0.01),0.5,3); } },{passive:false});
+  return v;
+}
+const FACES=[{n:[1,0,0],i:[1,3,7,5]},{n:[-1,0,0],i:[0,4,6,2]},{n:[0,1,0],i:[2,6,7,3]},{n:[0,-1,0],i:[0,1,5,4]},{n:[0,0,1],i:[4,5,7,6]},{n:[0,0,-1],i:[0,2,3,1]}];
+const LIGHT=vnorm([0.35,0.85,0.5]);
+function boxPrim(v,c,s,col,o){
+  o=o||{}; const pts=[];
+  for(let i=0;i<8;i++){ const p=v.project([c[0]+(i&1?s[0]:-s[0])/2,c[1]+(i&2?s[1]:-s[1])/2,c[2]+(i&4?s[2]:-s[2])/2]); if(!p) return null; pts.push(p); }
+  const pc=v.project(c); if(!pc) return null;
+  return {z:pc[2]+(o.zb||0),d(ctx){
+    ctx.globalAlpha=o.alpha==null?1:o.alpha; ctx.lineJoin='round';
+    for(const f of FACES){
+      const fc=[c[0]+f.n[0]*s[0]/2,c[1]+f.n[1]*s[1]/2,c[2]+f.n[2]*s[2]/2];
+      if((v.cam[0]-fc[0])*f.n[0]+(v.cam[1]-fc[1])*f.n[1]+(v.cam[2]-fc[2])*f.n[2]<=0) continue;
+      const b=Math.max(0,vdot(f.n,LIGHT)); let fcCol=mixc(col,BLACK,(1-b)*(C.dark?0.42:0.2));
+      if(f.n[1]>0) fcCol=mixc(fcCol,WHITE,C.dark?0.07:0.22);
+      ctx.beginPath(); f.i.forEach((k,j)=>j?ctx.lineTo(pts[k][0],pts[k][1]):ctx.moveTo(pts[k][0],pts[k][1])); ctx.closePath();
+      ctx.fillStyle=rgb(fcCol); ctx.fill(); ctx.lineWidth=o.lw||1; ctx.strokeStyle=o.stroke||rgb(mixc(col,C.dark?WHITE:BLACK,0.22)); ctx.stroke();
+    }
+    ctx.globalAlpha=1; if(o.after) o.after(ctx);
+  }};
+}
+function faceText(v,ctx,center,ex,ey,draw){
+  const p0=v.project(center),px=v.project(vadd(center,ex)),py=v.project(vadd(center,ey)); if(!p0||!px||!py) return;
+  ctx.save(); ctx.transform((px[0]-p0[0])/100,(px[1]-p0[1])/100,-(py[0]-p0[0])/100,-(py[1]-p0[1])/100,p0[0],p0[1]); draw(ctx); ctx.restore();
+}
+function drawFloor(v,y,ext){
+  const ctx=v.ctx; ctx.lineWidth=1; ctx.strokeStyle=rgb(C.floor,0.75); ctx.beginPath();
+  for(let t=-ext;t<=ext+0.01;t+=1.5){
+    let a=v.project([t,y,-ext]),b=v.project([t,y,ext]); if(a&&b){ ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); }
+    a=v.project([-ext,y,t]); b=v.project([ext,y,t]); if(a&&b){ ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); }
+  }
+  ctx.stroke();
+}
+function pill(ctx,x,y,text,bg,fg,size){
+  ctx.font='600 '+size+'px '+MONO; const w=ctx.measureText(text).width+size*0.9,h=size*1.55,r=h/2;
+  ctx.beginPath(); ctx.moveTo(x-w/2+r,y-h/2); ctx.lineTo(x+w/2-r,y-h/2); ctx.arc(x+w/2-r,y,r,-Math.PI/2,Math.PI/2); ctx.lineTo(x-w/2+r,y+h/2); ctx.arc(x-w/2+r,y,r,Math.PI/2,Math.PI*1.5); ctx.closePath();
+  ctx.fillStyle=bg; ctx.fill(); ctx.fillStyle=fg; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,x,y+size*0.04);
+}
+// ───────── state
+let sim, chapter=0, modeKey='seq', exIdx=0, playing=false, timer=null, stepTimer=null, tickTime=-1e9, animDur=380, selected=null, autoRot=true;
+const orders=new Map();
+const seen=new Set(); try{ for(const i of JSON.parse(localStorage.getItem('inTests.seen')||'[]')) seen.add(+i); }catch(_){ }
+const inFit={c:[0,0,0],dist:14,floor:-3,snap:true};
+let vnL=null;
+const vnV=makeView($('#vnCanvas'),{az:-0.42,el:0.2,azMin:-0.9,azMax:0.9,elMin:-0.1,elMax:0.85});
+const inV=makeView($('#inCanvas'),{az:0.3,el:0.22});
+
+// ───────── interaction net: layout + drawing
+const NODE_R=0.42;
+const sizeOf=a=>{ const n=nodeLabel(a).length; return n>2?Math.min(1.42,1+0.14*(n-2)):1; };
+function layoutStep(net){
+  const ns=[...net.nodes.values()], n=ns.length;
+  for(let i=0;i<n;i++) ns[i].f=[0,0,0];
+  for(let i=0;i<n;i++){ const a=ns[i]; for(let j=i+1;j<n;j++){ const b=ns[j];
+    let dx=a.pos[0]-b.pos[0],dy=a.pos[1]-b.pos[1],dz=a.pos[2]-b.pos[2],d2=dx*dx+dy*dy+dz*dz;
+    if(d2<0.02){ dx=0.1; dy=0.06*((i+j)%3-1); dz=0.08; d2=0.02; }
+    const d=Math.sqrt(d2), F=Math.min(2.3/d2,7)/d;
+    a.f[0]+=dx*F; a.f[1]+=dy*F; a.f[2]+=dz*F; b.f[0]-=dx*F; b.f[1]-=dy*F; b.f[2]-=dz*F; } }
+  for(const a of ns) for(let p=0;p<a.ports.length;p++){ const r=a.ports[p]; if(!r||r.n<=a.id) continue; const b=net.nodes.get(r.n); if(!b) continue;
+    const active=p===0&&r.p===0&&a.type!=='OUT'&&b.type!=='OUT';
+    const dx=b.pos[0]-a.pos[0],dy=b.pos[1]-a.pos[1],dz=b.pos[2]-a.pos[2],d=Math.max(0.05,Math.hypot(dx,dy,dz)),F=7*(d-(active?2:1.5))/d;
+    a.f[0]+=dx*F; a.f[1]+=dy*F; a.f[2]+=dz*F; b.f[0]-=dx*F; b.f[1]-=dy*F; b.f[2]-=dz*F; }
+  for(const a of ns){
+    if(a.type==='OUT'){ a.pos=[0,TOP,0]; continue; }
+    a.f[0]-=a.pos[0]*0.14; a.f[2]-=a.pos[2]*0.75; a.f[1]-=a.pos[1]*0.1+0.25;
+    for(let c=0;c<3;c++){ a.vel[c]=clamp((a.vel[c]+a.f[c]*0.03)*0.84,-3,3); a.pos[c]+=a.vel[c]*0.03; }
+  }
+}
+function computePorts(net){
+  for(const a of net.nodes.values()){
+    if(a.type==='OUT'){ a._pp=[a.pos]; continue; }
+    const pr=a.ports[0], pn=pr&&net.nodes.get(pr.n), R=NODE_R*sizeOf(a);
+    const dir=pn?vnorm(vsub(pn.pos,a.pos)):[0,1,0]; const pp=[vadd(a.pos,vmul(dir,NODE_R*0.8+R))], ts=[];
+    for(let i=1;i<a.ports.length;i++){ const r=a.ports[i], b=r&&net.nodes.get(r.n); let t=b?vnorm(vsub(b.pos,a.pos)):vmul(dir,-1);
+      const fw=vdot(t,dir)+0.3; if(fw>0){ t=vsub(t,vmul(dir,fw)); t=vlen(t)<1e-3?anyPerp(dir):vnorm(t); } ts.push(t); }
+    if(ts.length===2&&vdot(ts[0],ts[1])>0.7){ let q=vcross(dir,ts[0]); q=vlen(q)<1e-3?anyPerp(dir):vnorm(q); ts[0]=vnorm(vadd(ts[0],vmul(q,0.5))); ts[1]=vnorm(vsub(ts[1],vmul(q,0.5))); }
+    for(const t of ts) pp.push(vadd(a.pos,vmul(t,R)));
+    a._pp=pp;
+  }
+}
+function drawNode(ctx,v,a,p,sc,alpha,ringCol,ringA,ownerCol,isSel){
+  const col=C[TYPE[a.type]], r=NODE_R*p[3]*sc*(a.type==='OUT'?1:sizeOf(a)); if(r<0.5) return;
+  ctx.globalAlpha=alpha;
+  if(a.type==='OUT'){
+    ctx.beginPath(); ctx.arc(p[0],p[1],r*0.95,0,6.2832); ctx.fillStyle=rgb(C.surface); ctx.fill(); ctx.lineWidth=Math.max(2,r*0.24); ctx.strokeStyle=rgb(C.ink); ctx.stroke();
+    ctx.fillStyle=rgb(C.ink); ctx.font='600 '+Math.max(11,r*0.85)+'px '+SANS; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(outLabel,p[0],p[1]-r*1.35);
+    ctx.globalAlpha=1; return;
+  }
+  const pts=a._pp.map(q=>v.project(q)), studs=[];
+  for(let i=0;i<pts.length;i++){ const q=pts[i]; if(!q) continue; const x=p[0]+(q[0]-p[0])*sc,y=p[1]+(q[1]-p[1])*sc; studs.push({i,x,y,front:q[2]<p[2]}); }
+  const stud=s=>{ ctx.beginPath(); if(s.i===0){ ctx.arc(s.x,s.y,Math.max(2,r*0.2),0,6.2832); ctx.fillStyle=rgb(C.surface); ctx.fill(); ctx.lineWidth=Math.max(1,r*0.09); ctx.strokeStyle=rgb(mixc(col,BLACK,0.35)); ctx.stroke(); } else { ctx.arc(s.x,s.y,Math.max(1.5,r*0.15),0,6.2832); ctx.fillStyle=rgb(mixc(col,BLACK,0.45)); ctx.fill(); } };
+  const tip=studs.find(s=>s.i===0);
+  if(tip){ const dx=tip.x-p[0],dy=tip.y-p[1],L=Math.hypot(dx,dy); if(L>r*0.5){ const nx=-dy/L*r*0.92,ny=dx/L*r*0.92; ctx.beginPath(); ctx.moveTo(p[0]+nx,p[1]+ny); ctx.lineTo(tip.x,tip.y); ctx.lineTo(p[0]-nx,p[1]-ny); ctx.closePath(); ctx.fillStyle=rgb(mixc(col,BLACK,0.22)); ctx.fill(); } }
+  for(const s of studs) if(!s.front) stud(s);
+  const g=ctx.createRadialGradient(p[0]-r*0.35,p[1]-r*0.4,r*0.08,p[0],p[1],r);
+  g.addColorStop(0,rgb(mixc(col,WHITE,0.55))); g.addColorStop(0.55,rgb(col)); g.addColorStop(1,rgb(mixc(col,BLACK,0.35)));
+  ctx.beginPath(); ctx.arc(p[0],p[1],r,0,6.2832); ctx.fillStyle=g; ctx.fill();
+  if(r>5){ const lab=nodeLabel(a); let fs=r*1.05; ctx.font='700 '+fs+'px '+SANS; const w=ctx.measureText(lab).width; if(w>r*1.7){ fs*=r*1.7/w; ctx.font='700 '+fs+'px '+SANS; }
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,p[0],p[1]+fs*0.06); }
+  for(const s of studs) if(s.front) stud(s);
+  if(ownerCol){ ctx.beginPath(); ctx.arc(p[0],p[1],r*1.24,0,6.2832); ctx.lineWidth=Math.max(2,r*0.2); ctx.strokeStyle=rgb(ownerCol); ctx.stroke(); }
+  if(ringCol){ ctx.globalAlpha=alpha*ringA; ctx.beginPath(); ctx.arc(p[0],p[1],r*1.5,0,6.2832); ctx.lineWidth=Math.max(2,r*0.16); ctx.strokeStyle=rgb(ringCol); ctx.stroke(); }
+  if(isSel){ ctx.globalAlpha=1; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(p[0],p[1],r*1.75,0,6.2832); ctx.lineWidth=1.5; ctx.strokeStyle=rgb(C.ink); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.globalAlpha=1;
+}
+// ───────── tile 的硬體：和 node 的圖畫在同一個 3D 場景裡，立在地板上
+const HW_INFO={
+  tSC:'<b>Scheduler</b>　每一輪只照三條規則決定做什麼：queue 裡有東西就做最新的一對；空了就向鄰居拿一對；鄰居也沒有多的就睡。沒有任何一個 tile 指揮別的 tile。',
+  tQ:'<b>Work queue</b>　疊著這個 tile 手上還沒做的 active pair，一片代表一對。它的角色相當於 PC，差別是裡面可以同時有很多個「下一步」。',
+  tRU:'<b>規則表</b>　用兩個 node 的種類查出要套哪一條規則，角色相當於 decoder。六格對應六條規則；函式的規則由程式提供，也放在這裡。',
+  tEN:'<b>Engine</b>　照規則動手改寫：釋放舊的兩格，配置新的 node；遇到算術或比較，就用它裡面的 ALU 算。',
+  tME:'<b>Node memory</b>　這個 tile 自己的 local memory。一小格存一個 node，顏色和上面圖裡的 node 相同；虛線連著的就是同一個 node。圖既是程式也是資料，都放在這裡。'
+};
+const RULE_ORDER=['OP','OP1','FN','DUPN','DUPC','ERA'];
+const RULE_NAME={OP:'運算 ⋈ 數字',OP1:'「a+」⋈ 數字',FN:'函式 ⋈ 資料',DUPN:'δ ⋈ 數字',DUPC:'δ ⋈ list',ERA:'ε ⋈ 資料'};
+const HWX={tSC:-3.55,tQ:-2.35,tRU:-0.95,tEN:0.5,tME:2.65};
+const MEM_COLS=6, MEM_CAP=24;
+const memCell=i=>[1.7+(i%MEM_COLS)*0.38,0.14+((i/MEM_COLS)|0)*0.28];
+const ruleCell=i=>[-1.215+(i%2)*0.53,0.14+(2-((i/2)|0))*0.27];
+// 每個 node 在它那個 tile 的 node memory 裡佔一格；釋放之後那一格可以再用
+const slotOf=new Map();
+const tileOfNode=n=>sim.mode==='tiles'?n.owner:0;
+function syncSlots(){
+  const net=sim.net, used=new Map(), U=t=>{ let u=used.get(t); if(!u){ u=new Set(); used.set(t,u); } return u; };
+  for(const [id,s] of slotOf){ const n=net.nodes.get(id); if(!n||tileOfNode(n)!==s.t) slotOf.delete(id); else U(s.t).add(s.i); }
+  for(const n of net.nodes.values()){ if(n.type==='OUT'||slotOf.has(n.id)) continue; const t=tileOfNode(n), u=U(t); let i=0; while(u.has(i)) i++; if(i<MEM_CAP){ u.add(i); slotOf.set(n.id,{t,i}); } }
+}
+function tileGeo(w){
+  const s=sim, multi=s.mode==='tiles'&&s.grid>1, g=multi?s.grid:1, k1=clamp(w/390,1,1.5), span=multi?[0,0,9.6,11.4,13.2][g]:8.4*k1, ts=span/g, k=multi?ts*0.92/8.4:k1, list=[];
+  for(let t=0;t<g*g;t++){ const cz=multi?(((t/g)|0)-(g-1)/2)*ts:0; list.push({t,cx:multi?((t%g)-(g-1)/2)*ts:0,cz,hz:multi?cz+ts*0.2:0}); }
+  return {multi,g,span,ts,k,list};
+}
+let outLabel='結果', inPicks=[], selHw=null;
+function drawIN(now,dt){
+  const v=inV, ctx=v.ctx, net=sim.net, tilesMode=sim.mode==='tiles', G=tileGeo(v.w), k=G.k, big=k>=0.8;
+  layoutStep(net); layoutStep(net); computePorts(net);
+  let minX=1e9,maxX=-1e9,minY=1e9;
+  for(const a of net.nodes.values()){ const p=a.pos; if(p[0]<minX) minX=p[0]; if(p[0]>maxX) maxX=p[0]; if(p[1]<minY) minY=p[1]; }
+  const lk=inFit.snap?1:0.07; inFit.snap=false;
+  inFit.floor=lerp(inFit.floor,minY-(G.multi?1.8:1.35*k+0.95),lk);
+  const FY=inFit.floor, yTop=TOP+1, yBot=FY-0.5*k-(G.multi?G.span/2:0.9*k)*Math.abs(Math.sin(v.el))*1.25;
+  const halfW=Math.max((maxX-minX)/2+0.9,G.span/2+0.5), halfH=(yTop-yBot)/2;
+  const want=focalOf(v)*Math.max(halfW/(0.47*v.w),halfH/(0.47*v.h))+0.8;
+  inFit.c=[lerp(inFit.c[0],G.multi?0:clamp((minX+maxX)/2,-0.8,0.8),lk),lerp(inFit.c[1],(yTop+yBot)/2,lk),0]; inFit.dist=lk===1?want:lerp(inFit.dist,want,lk);
+  v.target=inFit.c; v.dist=inFit.dist;
+  if(autoRot&&!reduced&&now-v.lastUser>3000){ if(v.swT==null){ v.swT=now; v.swC=v.az; } v.az=v.swC+0.42*Math.sin((now-v.swT)/2600); } else v.swT=null;
+  v.update();
+  ctx.setTransform(v.dpr,0,0,v.dpr,0,0); ctx.clearRect(0,0,v.w,v.h);
+  const tA=clamp((now-tickTime)/animDur,0,1), items=sim.inItems(), pipe=!!sim.pipe;
+  drawFloor(v,FY,Math.max(6,Math.ceil((halfW+1.5)/1.5)*1.5));
+  // 途中的每一對各自在第幾個階段：0 對上、1 拆掉、2 長出、3 接好
+  const pairSt=new Map(), stF=new Map(), stN=new Map(), age=p=>sim.tickN-p.born;
+  for(const it of items){ if(it.stage<=1){ pairSt.set(it.pair.id,it.stage); stF.set(it.pair.f,it.stage); stF.set(it.pair.c,it.stage); } else if(it.fired) for(const m of it.fired.made) stN.set(m.id,it.stage); }
+  const nEarly=pairSt.size;
+  // 每個 tile 這一輪的狀態，以及它的底板
+  const tOf=p=>tilesMode?p.tile:0, slabs=[], stealOn=tilesMode&&(pipe||(sim.inActive&&sim.phase<=1));
+  for(const T of G.list){
+    T.pend=net.pairs.filter(p=>tOf(p)===T.t); T.its=items.filter(it=>(tilesMode?it.tile:0)===T.t); T.s=[0,1,2,3].map(n=>T.its.filter(it=>it.stage===n));
+    T.born=T.pend.filter(p=>age(p)<=1); T.busy=T.its.length>0; T.steal=stealOn?sim.steals.find(x=>x.to===T.t):null;
+    const tc=tilesMode?tileColor(T.t):C.inet, on=T.its.some(it=>it.stage<=2), idle=!T.busy&&!T.pend.length, rest=T.pend.length-T.s[0].length-T.s[1].length;
+    const w=G.multi?G.ts*0.92:8.7*k, d=G.multi?G.ts*0.92:1.8*k, state=idle?(T.steal?'向 T'+T.steal.from+' 拿':'睡'):(on?'做 '+T.its.length+' 對':'')+(rest>0?' 排 '+rest:'');
+    const b=boxPrim(v,[T.cx,FY-0.1,T.cz],[w,0.2,d],mixc(tc,C.box,on?0.45:idle?0.9:0.74),G.multi?{after(ctx){ faceText(v,ctx,[T.cx,FY,T.cz-G.ts*0.22],[1,0,0],[0,0,-1],c2=>{ const u=G.ts*100; c2.textAlign='center'; c2.textBaseline='middle'; c2.fillStyle=rgb(on?(C.dark?BLACK:WHITE):C.muted,0.94); c2.font='700 '+u*0.14+'px '+MONO; c2.fillText('T'+T.t,0,-u*0.09); c2.font='600 '+u*0.095+'px '+SANS; c2.fillText(state,0,u*0.09); }); }}:null);
+    if(b) slabs.push(b);
+  }
+  slabs.sort((a,b)=>b.z-a.z).forEach(s=>s.d(ctx));
+  // shadows
+  const se=Math.max(0.12,Math.abs(Math.sin(v.el)));
+  for(const a of net.nodes.values()){ const s=v.project([a.pos[0],FY,a.pos[2]]); if(!s) continue; const h=a.pos[1]-FY, rr=NODE_R*s[3]*1.1; ctx.beginPath(); ctx.ellipse(s[0],s[1],rr,rr*se,0,0,6.2832); ctx.fillStyle=rgb(C.dark?BLACK:C.ink,(C.dark?0.4:0.13)*clamp(1-h/11,0.2,1)); ctx.fill(); }
+  const P=[]; inPicks=[];
+  // wires
+  for(const a of net.nodes.values()) for(let i=0;i<a.ports.length;i++){
+    const r=a.ports[i]; if(!r||r.n<a.id) continue; const b=net.nodes.get(r.n); if(!b) continue;
+    const A2=v.project(a._pp[i]||a.pos), B2=v.project(b._pp[r.p]||b.pos); if(!A2||!B2) continue;
+    const active=i===0&&r.p===0&&a.type!=='OUT'&&b.type!=='OUT';
+    const fc=net.fresh.get(a.id+':'+i), fAge=fc>0?sim.tickN-fc:9, fresh=fAge<=1;
+    const ghost=stF.get(a.id)===1||stF.get(b.id)===1;
+    P.push({z:(A2[2]+B2[2])/2+0.03,d(ctx){
+      ctx.lineCap='round'; ctx.globalAlpha=ghost?1-0.65*tA:1;
+      ctx.lineWidth=Math.max(1.3,(active?0.12:fresh?0.09:0.06)*(A2[3]+B2[3])/2);
+      ctx.strokeStyle=active?rgb(C.hot):fresh?rgb(C.inet,fAge===1?1-0.5*tA:1):rgb(C.muted,0.75);
+      if(ghost) ctx.setLineDash([4,5]);
+      ctx.beginPath(); ctx.moveTo(A2[0],A2[1]); ctx.lineTo(B2[0],B2[1]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }});
+  }
+  // nodes
+  for(const a of net.nodes.values()){
+    const p=v.project(a.pos); if(!p) continue;
+    let sc=1,alpha=1,ring=null,ringA=1;
+    const fs=stF.get(a.id), ns=stN.get(a.id);
+    if(fs!=null){ if(fs===0){ ring=C.hot; ringA=easeOut(tA); } else { alpha=1-0.7*tA; sc=1-0.18*tA; } }
+    if(ns!=null){ ring=C.inet; if(ns===2){ sc=Math.max(0.05,easeBack(tA)); } else ringA=1-tA; }
+    const own=tilesMode&&a.type!=='OUT'?tileColor(a.owner):null;
+    P.push({z:p[2],d(ctx){ drawNode(ctx,v,a,p,sc,alpha,ring,ringA,own,selected===a.id); }});
+    inPicks.push({x:p[0],y:p[1],r:NODE_R*p[3]*1.3*sizeOf(a),z:p[2],node:a});
+  }
+  // tile 上的硬體
+  const cellsBy=new Map(); for(const [id,s] of slotOf){ const n=net.nodes.get(id); if(!n) continue; let a=cellsBy.get(s.t); if(!a){ a=[]; cellsBy.set(s.t,a); } a.push({n,i:s.i}); }
+  const base=C.box, onTxt=C.dark?'#0e131a':'#fff', qTops=[];
+  const beam3=(a,b,col,wd)=>{ const A2=v.project(a),B2=v.project(b); if(!A2||!B2||tA>=1) return; P.push({z:Math.min(A2[2],B2[2])-4,d(ctx){ const t=clamp(tA/0.7,0,1), fade=tA>0.7?clamp(1-(tA-0.7)*3.3,0,1):1;
+    ctx.lineCap='round'; ctx.lineWidth=wd; ctx.strokeStyle=rgb(col,0.5*fade); ctx.beginPath(); ctx.moveTo(A2[0],A2[1]); ctx.lineTo(B2[0],B2[1]); ctx.stroke();
+    const x=lerp(A2[0],B2[0],easeOut(t)),y=lerp(A2[1],B2[1],easeOut(t)); ctx.beginPath(); ctx.arc(x,y,wd*1.9,0,6.2832); ctx.fillStyle=rgb(col,fade); ctx.fill(); }}); };
+  const tie=(a,b,col,al)=>{ const A2=v.project(a),B2=v.project(b); if(!A2||!B2||al<=0.02) return; P.push({z:Math.min(A2[2],B2[2])-4,d(ctx){ ctx.setLineDash([3,4]); ctx.lineWidth=1.3; ctx.strokeStyle=rgb(col,0.8*al); ctx.beginPath(); ctx.moveTo(A2[0],A2[1]); ctx.lineTo(B2[0],B2[1]); ctx.stroke(); ctx.setLineDash([]); }}); };
+  const note=(pos,text,bg,fg)=>{ const q=v.project(pos); if(!q) return; P.push({z:q[2]-6,d(ctx){ pill(ctx,q[0],q[1],text,bg,fg,clamp(q[3]*0.3,10.5,13)); }}); };
+  for(const T of G.list){
+    const W=(lx,ly,lz)=>[T.cx+lx*k,FY+ly*k,T.hz+(lz||0)*k];
+    const box=(lx,ly,lz,w,h,d,col,o)=>{ const b=boxPrim(v,W(lx,ly,lz),[w*k,h*k,d*k],col,o); if(b) P.push(b); };
+    const tc=tilesMode?tileColor(T.t):C.inet, S0=T.s[0], S1=T.s[1], S2=T.s[2], S3=T.s[3], early=S0.length+S1.length, late=S2.length+S3.length;
+    box(HWX.tSC,0.3,0,0.9,0.6,0.6,S0.length||T.steal?mixc(tc,base,0.3):base);
+    const nq=Math.min(6,T.pend.length), nf=Math.min(nq,early), nb=Math.min(nq-nf,T.born.length);
+    box(HWX.tQ,0.02,0,1.24,0.04,0.84,mixc(base,C.ink,0.18));
+    for(let i=0;i<nq;i++){ const top=nq-1-i; box(HWX.tQ,0.115+i*0.15,0,1.1,0.12,0.7,top<nf?mixc(C.hot,base,S0.length?0.15:0.15+0.55*tA):top<nf+nb?mixc(C.inet,base,0.2):mixc(base,C.ink,0.1)); }
+    const qTop=W(HWX.tQ,0.07+nq*0.15,0.36); qTops[T.t]=qTop;
+    const g1=new Map(), g2=new Set(); for(const it of S1) g1.set(it.pair.id,describe(net,it.pair).group); for(const it of S2) g2.add(it.fired.rule);
+    const groups=new Set([...g1.values(),...g2]);
+    const rulePos=g=>{ const c=ruleCell(RULE_ORDER.indexOf(g)); return big?W(c[0],c[1],0.27):W(HWX.tRU,0.41,0.27); };
+    if(big) RULE_ORDER.forEach((g,i)=>{ const c=ruleCell(i); box(c[0],c[1],0,0.48,0.22,0.5,groups.has(g)?mixc(C.hot,base,0.2):mixc(base,C.surface,0.2)); });
+    else box(HWX.tRU,0.41,0,1.05,0.8,0.5,groups.size?mixc(C.hot,base,0.3):mixc(base,C.surface,0.2));
+    box(HWX.tEN,0.4,0,1.2,0.8,0.8,late?mixc(tc,base,S2.length?0.25:0.25+0.55*tA):mixc(base,C.inet,0.12));
+    box(HWX.tME,0.6,-0.3,2.36,1.2,0.06,mixc(base,C.surface,0.45));
+    const cells=cellsBy.get(T.t)||[], cellAt={};
+    for(const c of cells){ const m=memCell(c.i), id=c.n.id, fs=stF.get(id), ns=stN.get(id), col=C[TYPE[c.n.type]]; cellAt[id]=W(m[0],m[1],0.27);
+      const sc=ns===2?Math.max(0.1,easeBack(tA)):1;
+      box(m[0],m[1],0,0.34*sc,0.24*sc,0.5,fs===0?mixc(col,WHITE,0.3):col,{alpha:fs===1?1-0.75*tA:1,stroke:fs!=null?rgb(C.hot):ns!=null?rgb(C.inet):null,lw:fs!=null||ns!=null?2:1}); }
+    // 每個階段一種訊號；途中有幾對在不同階段，就同時有幾種
+    const few=T.its.length<=4, ctr=W(HWX.tME,0.6,0.27), eng=W(HWX.tEN,0.4,0.42), bw=clamp(2.6*k,1.3,2.4);
+    if(S0.length){ if(few){ for(const it of S0) for(const id of [it.pair.f,it.pair.c]) if(cellAt[id]) beam3(qTop,cellAt[id],C.hot,bw); } else beam3(qTop,ctr,C.hot,bw); }
+    if(S1.length){ if(few){ for(const it of S1) if(cellAt[it.pair.f]) beam3(cellAt[it.pair.f],rulePos(g1.get(it.pair.id)),C.hot,bw); } else for(const g of new Set(g1.values())) beam3(ctr,rulePos(g),C.hot,bw); }
+    if(S2.length){ for(const g of g2) beam3(rulePos(g),eng,C.hot,bw); let m=0; for(const it of S2) for(const nd of it.fired.made) if(cellAt[nd.id]&&m++<8) beam3(eng,cellAt[nd.id],C.inet,bw); }
+    if(S3.length&&T.born.some(p=>age(p)===1)) beam3(eng,qTop,C.inet,bw);
+    if(few&&big){
+      for(const it of S0.concat(S1)) for(const id of [it.pair.f,it.pair.c]){ const nd=net.nodes.get(id); if(nd&&cellAt[id]) tie(cellAt[id],nd.pos,C.hot,it.stage===0?easeOut(tA):1-0.8*tA); }
+      for(const it of S2.concat(S3)) for(const nd of it.fired.made) if(cellAt[nd.id]&&net.nodes.has(nd.id)) tie(cellAt[nd.id],nd.pos,C.inet,it.stage===2?easeOut(tA):1-tA);
+    }
+    if(big){
+      const names=[['tSC','scheduler'],['tQ','work queue'],['tRU','規則表'],['tEN','engine'],['tME','node memory']];
+      for(const nm of names){ const q=v.project(W(HWX[nm[0]],-0.36,0.95)); if(!q) continue; const fs=clamp(q[3]*0.27,9.5,12.5), sel=selHw===nm[0];
+        P.push({z:q[2]-6,d(ctx){ ctx.font=(sel?'700 ':'600 ')+fs+'px '+SANS; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=rgb(sel?C.ink:C.muted); ctx.fillText(nm[1],q[0],q[1]); }});
+        const c=v.project(W(HWX[nm[0]],0.45,0.3)); if(c) inPicks.push({x:c[0],y:c[1],r:Math.max(20,c[3]*0.6),z:c[2]+0.6,hw:nm[0]}); }
+      if(groups.size){ const g=[...groups]; note(W(HWX.tRU,1.14,0.3),RULE_NAME[g[0]]+(g.length>1?' 等 '+g.length+' 條':''),rgb(C.hot),onTxt); }
+      if(late){ const r=(S2[0]||S3[0]).fired; note(W(HWX.tEN,1.12,0.3),late>1?'同時改寫 '+late+' 對':(r.alu?'ALU：'+r.alu:r.made.length?'配置 '+r.made.length+' 個 node':'只釋放兩格'),rgb(C.inet),onTxt); }
+      if(S0.length) note(W(HWX.tSC,0.92,0.3),'從 queue 取出',rgb(C.ink,0.86),rgb(C.bg));
+    }
+  }
+  if(stealOn) for(const s of sim.steals) if(qTops[s.from]&&qTops[s.to]) beam3(qTops[s.from],qTops[s.to],C.hot,3);
+  // active pair halos
+  for(const pr of net.pairs){
+    const f=net.nodes.get(pr.f), cc=net.nodes.get(pr.c); if(!f||!cc) continue;
+    const m=v.project([(f.pos[0]+cc.pos[0])/2,(f.pos[1]+cc.pos[1])/2,(f.pos[2]+cc.pos[2])/2]); if(!m) continue;
+    const st=pairSt.get(pr.id), fir=st!=null, ag=age(pr); let al=ag<=0?0:ag===1?tA:1;
+    if(st===1) al=1-0.6*tA; if(al<=0.01) continue;
+    const R=0.98*m[3]*(reduced?1:1+0.05*Math.sin(now/240+pr.id));
+    const name=fir&&m[3]>14&&nEarly<=3?nodeLabel(f)+' ⋈ '+nodeLabel(cc):null;
+    P.push({z:m[2]-0.9,d(ctx){
+      ctx.globalAlpha=al; ctx.beginPath(); ctx.arc(m[0],m[1],R,0,6.2832); ctx.fillStyle=rgb(C.hot,fir?0.13:0.07); ctx.fill();
+      ctx.lineWidth=fir?2.6:1.6; ctx.strokeStyle=rgb(C.hot,fir?1:0.7); if(!fir) ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+      if(name) pill(ctx,m[0],m[1]-R-12,name,rgb(C.hot),onTxt,Math.max(11,Math.min(14,m[3]*0.34)));
+      ctx.globalAlpha=1; }});
+    inPicks.push({x:m[0],y:m[1],r:Math.max(R,22),z:m[2]-3,pair:pr});
+  }
+  // flashes where pairs were just rewritten
+  if(tA<1) for(const it of items){ if(it.stage!==2||!it.fired) continue; const r=it.fired, g0=r.gone[0].pos,g1=r.gone[1].pos; const m=v.project([(g0[0]+g1[0])/2,(g0[1]+g1[1])/2,(g0[2]+g1[2])/2]); if(!m) continue;
+    P.push({z:m[2]-1,d(ctx){ ctx.beginPath(); ctx.arc(m[0],m[1],m[3]*(0.7+1.3*easeOut(tA)),0,6.2832); ctx.lineWidth=2.5; ctx.strokeStyle=rgb(C.inet,1-tA); ctx.stroke(); }}); }
+  P.sort((a,b)=>b.z-a.z); for(const p of P) p.d(ctx);
+}
+inV.onTap=(x,y)=>{
+  let best=null; for(const p of inPicks){ if(Math.hypot(p.x-x,p.y-y)>p.r) continue; if(p.pair&&!sim.canPick()) continue; if(!best||p.z<best.z) best=p; }
+  if(!best){ selected=null; selHw=null; refresh(); return; }
+  if(best.pair){ sim.forced=best.pair.id; selected=null; selHw=null; if(!playing) stepWhole(); }
+  else if(best.hw){ selHw=best.hw; selected=null; setLog('inLog',HW_INFO[best.hw]); }
+  else { selected=best.node.id; selHw=null; setLog('inLog',NODE_INFO[best.node.type]); }
+};
+
+// ───────── von Neumann: layout + drawing
+function vnLayout(vn,extraCores){
+  const cells=[]; vn.code.forEach((_,i)=>cells.push({k:'code',i}));
+  for(const name in vn.mem) vn.mem[name].forEach((_,j)=>cells.push({k:'data',name,j}));
+  cells.push({k:'out'});
+  const n=cells.length, cols=Math.ceil(n/11), rows=Math.ceil(n/cols), SW=3.2, SH=0.46, SD=0.8, GY=0.57, GX=3.45; let minY=0;
+  cells.forEach((c,idx)=>{ c.addr=idx; c.pos=[((idx/rows)|0)*GX,-(idx%rows)*GY-(c.k==='code'?0:0.24),0]; minY=Math.min(minY,c.pos[1]); });
+  const memRight=(cols-1)*GX+SW/2, cpu=[memRight+2.7,-0.75,0], regs={}, nr=vn.regNames.length;
+  vn.regNames.forEach((r,j)=>{ regs[r]=[cpu[0]+(j%2?0.8:-0.8),cpu[1]-1.9-((j/2)|0)*0.86,0]; });
+  const regBottom=nr?cpu[1]-1.9-(((nr-1)/2)|0)*0.86:cpu[1]-1;
+  const cores=[], nc=Math.min(3,extraCores); for(let k=0;k<nc;k++) cores.push([cpu[0]+(k-(nc-1)/2)*1.05,regBottom-1.6,0]);
+  const lo=[-SW/2-0.9,Math.min(minY-0.4,regBottom-0.5,nc?regBottom-2.2:0),0], hi=[cpu[0]+1.6,1,0];
+  return {cells,cpu,regs,regBottom,cores,extraCores,SW,SH,SD,minY,center:[(lo[0]+hi[0])/2,(lo[1]+hi[1])/2,0],hw:(hi[0]-lo[0])/2,hh:(hi[1]-lo[1])/2};
+}
+const STG=['F','D','X','W'];
+function drawVN(now){
+  const v=vnV, ctx=v.ctx, L=vnL, vn=sim.vn, items=sim.vnItems(), pipe=!!sim.pipe, tA=clamp((now-tickTime)/animDur,0,1);
+  v.target=L.center; v.dist=focalOf(v)*Math.max(L.hw/(0.44*v.w),L.hh/(0.4*v.h))+0.6; v.update();
+  ctx.setTransform(v.dpr,0,0,v.dpr,0,0); ctx.clearRect(0,0,v.w,v.h);
+  drawFloor({ctx,project:p=>v.project([p[0]+L.center[0],p[1],p[2]])},Math.min(L.minY,L.regBottom)-0.9,9);
+  const P=[], ink=rgb(C.ink), mut=rgb(C.muted), onTxt=C.dark?'#0e131a':'#fff';
+  const text=(str,x,y,font,fill,align)=>ctx2=>{ ctx2.font=font; ctx2.fillStyle=fill; ctx2.textAlign=align||'left'; ctx2.textBaseline='middle'; ctx2.fillText(str,x,y); };
+  const one=!pipe&&items[0]?items[0]:null, ph=one?one.stage:-1, ev=one?one.ev:null;
+  const showPC=pipe?(!vn.halted&&sim.fetchPC<vn.code.length?sim.fetchPC:-1):(one&&ph<3?one.pc:(vn.halted?-1:vn.pc)), x0=-L.SW*50+16, xr=L.SW*50-16;
+  // 途中的每一道 instruction 各自在第幾個階段
+  const at=new Map(), wrOld=new Map(), wrNow=new Set(), rdNow=new Set(), memHit=[]; let outLag=null, outHit=false;
+  for(const it of items){ at.set(it.pc,it); if(it.squash) continue; const st=VN.rw(it.ins);
+    if(it.stage===1||it.stage===2) for(const r of st.reads) rdNow.add(r);
+    if(it.ev){ if(it.stage===2){ for(const r of it.ev.writes) wrOld.set(r,it.ev.old[r]); if(it.ev.mem&&it.ev.mem.out) outLag=it.ev; }
+      if(it.stage===3){ for(const r of it.ev.writes) wrNow.add(r); if(it.ev.mem&&it.ev.mem.out) outHit=true; }
+      if(it.ev.mem&&it.ev.mem.arr) memHit.push(it.ev.mem); } }
+  let outCell=null; const cellOf=m=>L.cells.find(c=>c.k==='data'&&c.name===m.arr&&c.j===m.idx);
+  for(const c of L.cells){
+    const p=c.pos;
+    if(c.k==='code'){
+      const ins=vn.code[c.i], it=at.get(c.i), isPC=showPC===c.i, dead=!!it&&it.squash;
+      const col=!it?C.box:dead?mixc(C.muted,C.box,0.6):mixc(C.vn,C.box,it.stage===3?0.3+0.5*tA:0.3), hi=!!it&&!dead&&!(it.stage===3&&tA>0.5);
+      const b=boxPrim(v,p,[L.SW,L.SH,L.SD],col,{stroke:isPC?rgb(C.vn):null,lw:isPC?2.5:1,zb:isPC?-0.01:0,after(ctx){
+        faceText(v,ctx,[p[0],p[1],L.SD/2],[1,0,0],[0,1,0],ctx=>{ text(pad2(c.addr),x0,2,'500 21px '+MONO,hi?rgb(C.dark?BLACK:WHITE,0.75):mut)(ctx); text(ins.text,x0+44,2,'600 22px '+MONO,hi?onTxt:dead?mut:ink)(ctx);
+          if(pipe&&it){ ctx.fillStyle=rgb(col); ctx.fillRect(xr-24,-15,30,30); text(dead?'✕':STG[it.stage],xr,2,'700 24px '+MONO,dead?rgb(C.hot):hi?onTxt:rgb(C.vn),'right')(ctx); } });
+        if(isPC) faceText(v,ctx,[p[0]-L.SW/2-0.12,p[1],L.SD/2],[1,0,0],[0,1,0],text(pipe?'抓 ▸':'PC ▸',0,2,'700 22px '+(pipe?SANS:MONO),rgb(C.vn),'right'));
+      }}); if(b) P.push(b);
+    }else{
+      const isOut=c.k==='out', hitR=!isOut&&memHit.some(m=>m.arr===c.name&&m.idx===c.j), hitW=isOut&&outHit;
+      if(isOut) outCell=c;
+      const val=isOut?(outLag?outLag.oldOut:vn.out):vn.mem[c.name][c.j];
+      const col=hitW?mixc(C.hot,C.box,0.3+0.5*tA):hitR?mixc(C.vn,C.box,0.45):mixc(C.box,C.surface,0.35);
+      const b=boxPrim(v,p,[L.SW,L.SH,L.SD],col,{after(ctx){ faceText(v,ctx,[p[0],p[1],L.SD/2],[1,0,0],[0,1,0],ctx=>{ text(pad2(c.addr),x0,2,'500 21px '+MONO,mut)(ctx); text(isOut?'out':c.name+'['+c.j+']',x0+44,2,'500 21px '+MONO,mut)(ctx); text(val==null?'—':String(val),xr,2,'700 24px '+MONO,ink,'right')(ctx); }); }}); if(b) P.push(b);
+    }
+  }
+  const m0=L.cells[0].pos;
+  P.push({z:1e6,d(ctx){ faceText(v,ctx,[m0[0]-L.SW/2,m0[1]+0.55,L.SD/2],[1,0,0],[0,1,0],text('MEMORY：程式與資料放在同一塊',0,0,'600 19px '+SANS,mut)); }});
+  { const c=L.cpu, col=mixc(C.box,C.vn,0.16);
+    const b=boxPrim(v,c,[2.9,1.9,1.1],col,{after(ctx){ faceText(v,ctx,[c[0],c[1],0.55],[1,0,0],[0,1,0],ctx=>{
+      if(pipe){
+        text('CPU：四級 pipeline',-128,-72,'700 19px '+SANS,mut)(ctx);
+        for(let k=0;k<4;k++){ const it=items.find(i=>i.stage===k), y=-36+k*34; text(STG[k],-128,y,'700 22px '+MONO,rgb(C.vn))(ctx);
+          text(it?pad2(it.pc)+' '+it.ins.text.replace(/\s+/,' ')+(it.squash?' ✕':''):'—',-100,y,'600 17px '+MONO,it&&it.squash?mut:ink)(ctx); }
+      }else{
+        text('CPU',-125,-62,'700 22px '+SANS,mut)(ctx); if(ph>=0) text(PHASES[ph][0],125,-62,'600 19px '+MONO,rgb(C.vn),'right')(ctx);
+        text(showPC<0?'HALT':'PC  '+pad2(showPC),-125,-12,'700 34px '+MONO,rgb(C.vn))(ctx);
+        text(one&&(ph>0||tA>0.45)?one.ins.text:'—',-125,44,'600 20px '+MONO,ink)(ctx);
+        if(ev&&ph>=2&&ev.alu[0]!=='不用') text('ALU '+ev.alu[0]+' '+ev.alu[1],-125,78,'600 16px '+MONO,rgb(C.vn))(ctx);
+      } }); }}); if(b) P.push(b); }
+  for(const r of vn.regNames){ const c=L.regs[r], flash=wrNow.has(r), rd=rdNow.has(r);
+    const raw=wrOld.has(r)?wrOld.get(r):vn.reg[r], val=r==='ra'?pad2(raw):String(raw), col=flash?mixc(C.hot,C.box,0.25+0.55*tA):C.box, inv=flash&&tA<0.6;
+    const b=boxPrim(v,c,[1.45,0.68,0.8],col,{stroke:rd?rgb(C.vn):null,lw:rd?2.2:1,after(ctx){ faceText(v,ctx,[c[0],c[1],0.4],[1,0,0],[0,1,0],ctx=>{ text(r,-60,2,'500 23px '+MONO,inv?onTxt:mut)(ctx); text(val,58,2,'700 '+(val.length>3?26:30)+'px '+MONO,inv?onTxt:ink,'right')(ctx); }); }}); if(b) P.push(b); }
+  if(vn.regNames.length) P.push({z:1e6,d(ctx){ faceText(v,ctx,[L.cpu[0],L.cpu[1]-1.27,0.4],[1,0,0],[0,1,0],text('REGISTER',0,0,'600 21px '+SANS,mut,'center')); }});
+  L.cores.forEach(c=>{ const b=boxPrim(v,c,[0.95,0.8,0.8],mixc(C.box,C.surface,0.5),{alpha:0.85,after(ctx){ faceText(v,ctx,[c[0],c[1],0.4],[1,0,0],[0,1,0],ctx=>{ text('core',0,-17,'600 19px '+MONO,mut,'center')(ctx); text('閒置',0,17,'600 20px '+SANS,mut,'center')(ctx); }); }}); if(b) P.push(b); });
+  if(L.cores.length){ P.push({z:1e6,d(ctx){ faceText(v,ctx,[L.cpu[0],L.cores[0][1]+0.72,0.4],[1,0,0],[0,1,0],text('其他 '+L.extraCores+' 個 core 用不上',0,0,'600 19px '+SANS,mut,'center')); }}); }
+  P.sort((a,b)=>b.z-a.z); for(const p of P) p.d(ctx);
+  // signals between memory, CPU and registers: one kind per stage, for every instruction in flight
+  const beam=(a,b,col)=>{ const A2=v.project(a),B2=v.project(b); if(!A2||!B2||tA>=1) return; const t=clamp(tA/0.7,0,1), fade=tA>0.7?clamp(1-(tA-0.7)*3.3,0,1):1;
+    ctx.lineCap='round'; ctx.lineWidth=2.5; ctx.strokeStyle=rgb(col,0.55*fade); ctx.beginPath(); ctx.moveTo(A2[0],A2[1]); ctx.lineTo(B2[0],B2[1]); ctx.stroke();
+    const x=lerp(A2[0],B2[0],easeOut(t)),y=lerp(A2[1],B2[1],easeOut(t)); ctx.beginPath(); ctx.arc(x,y,5,0,6.2832); ctx.fillStyle=rgb(col,fade); ctx.fill(); };
+  const cpuL=[L.cpu[0]-1.45,L.cpu[1],0.3], cpuB=[L.cpu[0],L.cpu[1]-0.95,0.3], top=r=>[L.regs[r][0],L.regs[r][1]+0.34,0.3];
+  for(const it of items){ if(it.squash) continue; const s=L.cells[it.pc].pos, e=it.ev;
+    if(it.stage===0) beam([s[0]+L.SW/2,s[1],0.3],cpuL,C.vn);
+    if(it.stage===2&&e){ for(const r of e.reads) beam(top(r),cpuB,C.vn); if(e.mem&&e.mem.arr){ const mc=cellOf(e.mem); if(mc) beam([mc.pos[0]+L.SW/2,mc.pos[1],0.3],cpuL,C.vn); } }
+    if(it.stage===3&&e){ for(const r of e.writes) beam(cpuB,top(r),C.hot); if(e.mem&&e.mem.out&&outCell) beam(cpuL,[outCell.pos[0]+L.SW/2,outCell.pos[1],0.3],C.hot); } }
+}
+
+// ───────── UI
+const setLog=(id,html)=>{ $('#'+id).innerHTML=html; };
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const chip=(k,val,cls)=>'<span class="chip'+(cls?' '+cls:'')+'">'+k+' <b>'+val+'</b></span>';
+function vnDecode(i){
+  const A=i.args, t=a=>a.addr!=null?pad2(a.addr):a;
+  if(ARITH[i.op]) return isReg(A[1])?'要讀 '+A[0]+' 與 '+A[1]+'，結果寫回 '+A[0]+'。':'要讀 '+A[0]+'，和常數 '+A[1]+' 運算，結果寫回 '+A[0]+'。';
+  if(CMPB[i.op]) return '要比較 '+A[0]+' 與 '+A[1]+'，成立就跳到 '+t(A[2])+'。';
+  switch(i.op){
+    case 'LI': return '要把常數 '+A[1]+' 放進 '+A[0]+'。';
+    case 'MOV': return '要把 '+A[1]+' 複製到 '+A[0]+'。';
+    case 'BEQZ': return '要讀 '+A[0]+'，是 0 就跳到 '+t(A[1])+'。';
+    case 'JMP': return '要無條件跳到 '+t(A[0])+'。';
+    case 'LD': return '要從 memory 讀 '+A[1]+'，放進 '+A[0]+'。';
+    case 'ST': return '要把 '+A[1]+' 寫進 memory 的 '+A[0]+'。';
+    case 'CALL': return '要記下回來的 address，再跳到 '+t(A[0])+'。';
+    case 'RET': return '要讀 ra，跳回它記的 address。';
+    default: return '要停機。';
+  }
+}
+function vnText(){
+  const s=sim, vn=s.vn, cur=s.vnCur, ev=s.vnEvent;
+  if(!cur) return vn.halted?'停機。<code>out</code> 裡是 <b>'+vn.out+'</b>，總共執行 '+vn.count+' 道 instruction。':'PC 指著 <code>'+pad2(vn.pc)+'</code>，等著執行第一道 instruction。';
+  const code='<code>'+pad2(cur.pc)+' '+cur.ins.text.replace(/\s+/,' ')+'</code>';
+  switch(s.phase){
+    case 0: return '<b>fetch</b>　從 memory 取出 PC 指的那一道：'+code+'。';
+    case 1: return '<b>decode</b>　'+code+' '+vnDecode(cur.ins);
+    case 2: return '<b>execute</b>　'+code+' '+ev.ex;
+    default: return '<b>write back</b>　'+ev.wb+(vn.halted?' 總共執行 '+vn.count+' 道 instruction。':'');
+  }
+}
+function inText(){
+  const s=sim, net=s.net, n=net.pairs.length, res=net.result();
+  if(s.tickN===0) return '有 '+n+' 對 active pair（發亮的地方）。'+(s.mode==='seq'&&n>1?'點其中一對，或按「走一步」。':'按「走一步」開始。');
+  if(!s.inActive) return '完成。結果是 <b>'+res.value+'</b>，接在「結果」上。用了 '+net.interactions+' 次 interaction、'+s.rounds+' 輪。';
+  const items=s.phase<=1?s.firing.map(p=>describe(net,p)):s.lastFired, k=items.length, cnt={};
+  for(const it of items) cnt[it.name]=(cnt[it.name]||0)+1;
+  const list=Object.keys(cnt).slice(0,6).map(x=>'<code>'+esc(x)+(cnt[x]>1?' ×'+cnt[x]:'')+'</code>').join(' ')+(Object.keys(cnt).length>6?' …':'');
+  switch(s.phase){
+    case 0:{ let t='<b>對上</b>　'+(k===1?list+'　'+items[0].say:'這一輪同時做 '+k+' 對：'+list+'。');
+      if(s.mode==='tiles'){ t+=' '+k+' 個 tile 各做自己最新的一對。'; if(s.steals.length) t+=s.steals.map(x=>'T'+x.to+' 向 T'+x.from+' 拿走一對').join('、')+'，下一輪做。'; }
+      return t; }
+    case 1: return '<b>拆掉</b>　這 '+(k*2)+' 個 node 要消失了。它們身上的 wire 暫時斷開，圖的其他部分不動。';
+    case 2: return '<b>長出</b>　'+(k===1?items[0].say:'每一對各自換上規則右邊的小圖：'+list+'。');
+    default: return '<b>接好</b>　'+(n?'斷開的 wire 都接回去了。現在有 '+n+' 對 active pair'+(s.mode==='seq'&&n>1?'，點一對或按「走一步」。':'。'):'沒有 active pair 了，結果是 <b>'+res.value+'</b>。');
+  }
+}
+function vnPipeText(){
+  const s=sim, vn=s.vn, its=s.vnItems();
+  if(s.tickN===0) return 'pipeline 是空的。按「走一個 cycle」：每個 cycle 抓一道新的 instruction 進來，前面的各往前一個階段。遇到分支先猜一邊繼續抓。';
+  if(!its.length) return '停機。<code>out</code> 裡是 <b>'+vn.out+'</b>。做完 '+vn.count+' 道 instruction，花了 '+s.vnCycles+' 個 cycle。分支猜錯 '+s.vnMiss+' 次，作廢 '+s.vnBubbles+' 道。';
+  const line=k=>{ const it=its.find(i=>i.stage===k), nm='<b>'+PHASES[k][0]+'</b>　'; if(!it) return nm+'<span class="wait">空的</span>';
+    const code='<code>'+pad2(it.pc)+' '+it.ins.text.replace(/\s+/,' ')+'</code>';
+    if(it.squash) return nm+code+' <span class="kill">走錯路，作廢</span>';
+    if(k===2&&it.ev) return nm+code+' '+it.ev.ex+(it.miss?' <span class="kill">猜錯了，改抓 '+pad2(it.ev.next)+'，後面兩道作廢。</span>':'');
+    if(k===3&&it.ev) return nm+code+' '+it.ev.wb.replace(/PC [^。]*。$/,'');
+    return nm+code; };
+  return [3,2,1,0].map(line).join('<br>');
+}
+function inPipeText(){
+  const s=sim, net=s.net, its=s.inItems(), res=net.result(), names=['對上','拆掉','長出','接好'];
+  if(s.tickN===0) return 'work queue 裡有 '+net.pairs.length+' 對。按「走一個 cycle」：tile 每個 cycle 從 queue 取一對新的，前面取的各往前一個階段。';
+  if(s.inDone()) return '完成。結果是 <b>'+res.value+'</b>。做了 '+net.interactions+' 次 interaction，花了 '+s.rounds+' 個 cycle。';
+  const line=k=>{ const a=its.filter(i=>i.stage===k), nm='<b>'+names[k]+'</b>　'; if(!a.length) return nm+'<span class="wait">空的</span>';
+    return nm+a.slice(0,3).map(i=>'<code>'+esc(k<=1?describe(net,i.pair).name:i.fired.name)+'</code>').join(' ')+(a.length>3?' 等 '+a.length+' 對':'')+(a.length===1&&k===2?'　'+a[0].fired.say:''); };
+  const wait=net.pairs.filter(p=>!p.fly).length;
+  return [3,2,1,0].map(line).join('<br>')+'<br><span class="wait">'+(wait?'queue 裡還有 '+wait+' 對在等。':its.length?'queue 空了：下一對要等途中的改寫接好線才會出現。':'')+'</span>';
+}
+function renderTask(){
+  const ex=sim.ex;
+  $('#taskTitle').textContent=ex.title; $('#taskAns').textContent=ex.answer; $('#taskNote').textContent=ex.note;
+  $('#taskCode').innerHTML=ex.src.map(l=>{ const i=l.indexOf('//'); return i<0?esc(l):esc(l.slice(0,i))+'<span class="cm">'+esc(l.slice(i))+'</span>'; }).join('\n');
+  $('#vnHow').innerHTML='<b>這段程式寫成 instruction</b>　'+ex.vnHow; $('#inHow').innerHTML='<b>這段程式畫成圖</b>　'+ex.inHow;
+}
+function refresh(){
+  syncSlots();
+  const s=sim, vn=s.vn, net=s.net, res=net.result(), pipe=!!s.pipe, vIt=s.vnItems(), iIt=s.inItems(), vOK=vn.out!=null&&!vIt.some(it=>it.stage===2&&it.ev&&it.ev.mem&&it.ev.mem.out), iOK=s.tickN>0&&res.value!=null&&s.inDone();
+  { const tv=$('#taskVn'), ti=$('#taskIn'); tv.textContent=vOK?vn.out:'—'; tv.parentNode.classList.toggle('done',vOK); ti.textContent=iOK?res.value:'—'; ti.parentNode.classList.toggle('done',iOK); }
+  const showPC=pipe?(!vn.halted&&s.fetchPC<vn.code.length?s.fetchPC:-1):s.vnCur&&s.phase<3?s.vnCur.pc:(vn.halted?-1:vn.pc);
+  if(pipe){
+    $('#vnChips').innerHTML=chip('cycle',s.vnCycles)+chip('做完',vn.count+' 道')+chip('作廢',s.vnBubbles+' 道')+(vOK?chip('out',vn.out,'done'):'');
+    $('#inChips').innerHTML=chip('cycle',s.rounds)+chip('做完',net.interactions+' 對')+chip('途中',iIt.length+' 對')+(iOK?chip('結果',res.value,'done'):chip('在等',net.pairs.filter(p=>!p.fly).length+' 對'));
+  }else{
+    $('#vnChips').innerHTML=chip('PC',showPC<0?'—':pad2(showPC))+chip('step',vn.count)+(vOK?chip('out',vn.out,'done'):'');
+    $('#inChips').innerHTML=chip('node',net.agentCount())+chip('interaction',net.interactions)+chip('step',s.rounds)+(iOK?chip('結果',res.value,'done'):chip('可做',net.pairs.length+' 對'));
+  }
+  outLabel=iOK?'結果 = '+res.value:'結果';
+  setLog('vnLog',pipe?vnPipeText():vnText());
+  if(selected!=null&&!net.nodes.has(selected)) selected=null;
+  if(selected==null&&!selHw) setLog('inLog',pipe?inPipeText():inText());
+  $('#inBarsLb').textContent=pipe?'每個 cycle 有幾對在途中':'每一輪同時做幾對';
+  $('#inHint').textContent=s.canPick()&&net.pairs.length>1?'拖曳旋轉・點發亮的一對讓它先做':'拖曳旋轉・點 node 或下方 tile 上的零件看說明';
+  const cap=el=>Math.max(8,Math.floor((el.clientWidth||600)/9)), mw=Math.max(1,...s.widths), wb=$('#inBars'); wb.innerHTML=s.widths.slice(-cap(wb)).map((w,i,arr)=>'<i'+(i===arr.length-1&&(pipe?iIt.length>0:s.inActive&&s.phase<3)?' class="live"':'')+' style="height:'+Math.round(4+24*w/mw)+'px" title="'+w+' 對"></i>').join('');
+  const vb=$('#vnBars'), tr=vn.trace.slice(-cap(vb)); vb.innerHTML=tr.map(pc=>'<i style="height:'+Math.round(4+22*(pc+1)/vn.code.length)+'px;background:var(--vn)" title="'+pad2(pc)+'"></i>').join('');
+  const ops=new Set(vIt.filter(it=>!it.squash).map(it=>it.ins.op));
+  document.querySelectorAll('#isa tr[data-ops]').forEach(tr=>tr.classList.toggle('on',tr.dataset.ops.split(' ').some(o=>ops.has(o))));
+  const act=new Set(); for(const it of iIt) act.add(it.stage<=1?describe(net,it.pair).group:it.fired.rule);
+  document.querySelectorAll('.card[data-rule]').forEach(c=>c.classList.toggle('on',act.has(c.dataset.rule)));
+  const d=s.done(); $('#bNextDone').hidden=!(d&&CHAPTERS[chapter+1]);
+  if(d&&!seen.has(chapter)){ seen.add(chapter); try{ localStorage.setItem('inTests.seen',JSON.stringify([...seen])); }catch(_){ } document.querySelectorAll('#chapters button').forEach((b,i)=>b.classList.toggle('seen',seen.has(i))); }
+  $('#bStep').disabled=d; $('#bTick').disabled=d; $('#bEnd').disabled=d; $('#bPlay').disabled=d&&!playing; $('#bPlay').textContent=playing?'暫停':'連續播放';
+  const occ=new Set(vIt.filter(it=>!it.squash).map(it=>it.stage).concat(iIt.map(it=>it.stage)));
+  document.querySelectorAll('#stages li').forEach((li,i)=>li.classList.toggle('on',occ.has(i)));
+  $('#bStep').textContent=pipe?'▶ 走一個 cycle':'▶ 走一步'; $('#bTick').hidden=pipe;
+  $('#stageNote').innerHTML=pipe?'這一章兩邊都<b>疊著做</b>：每個 <b>cycle</b>，途中的每一件工作各前進一個階段，同時再開始一件新的。亮著的階段都有工作在做：':'<b>一步</b>＝左邊執行一道 instruction，右邊做一輪 interaction。每一步分成四個<b>階段</b>：';
+  if(iOK&&CHAPTERS[chapter].extra==='orders') orders.set(s.seq.join('|'),res.value);
+  refreshExtra();
+}
+const phaseMs=()=>Math.round(640-5.8*(+$('#speed').value));
+function tickOnce(){
+  if(!sim.tick()){ setPlaying(false); refresh(); return false; }
+  selected=null; selHw=null; tickTime=performance.now(); animDur=reduced?1:Math.min(phaseMs()*0.9,420); refresh();
+  if(sim.done()) setPlaying(false);
+  return true;
+}
+// 一步 = 四拍連著走
+function stepWhole(){
+  clearTimeout(stepTimer);
+  if(sim.pipe){ tickOnce(); return; }
+  if(reduced){ do{ if(!tickOnce()) break; }while(sim.phase!==3); return; }
+  const go=()=>{ if(!tickOnce()) return; if(sim.phase!==3) stepTimer=setTimeout(go,Math.min(phaseMs(),300)); };
+  go();
+}
+function setPlaying(p){ playing=p; clearTimeout(timer); if(p){ clearTimeout(stepTimer); loop(); } $('#bPlay').textContent=p?'暫停':'連續播放'; }
+function loop(){ timer=setTimeout(()=>{ if(!playing) return; if(tickOnce()) loop(); },phaseMs()); }
+function reset(){
+  setPlaying(false); clearTimeout(stepTimer); selected=null; const m=MODES[modeKey];
+  sim=CHAPTERS[chapter].pipe?new PipeSim(EX[exIdx],m.mode,m.g):new Sim(EX[exIdx],m.mode,m.g); slotOf.clear(); selHw=null;
+  inV.el=inV.home.el=sim.mode==='tiles'&&sim.grid>1?0.44:0.22;
+  for(let i=0;i<300;i++) layoutStep(sim.net);
+  vnL=vnLayout(sim.vn,sim.mode==='tiles'?sim.tiles-1:0);
+  inFit.snap=true; tickTime=-1e9; renderTask(); refresh();
+}
+const barCache=new Map();
+function refreshExtra(){
+  const ch=CHAPTERS[chapter], box=$('#extra'); if(!box) return;
+  if(ch.extra==='map'){
+    const vOn=sim.vnCur?sim.phase:-1, iOn=sim.inActive?sim.phase:-1;
+    box.innerHTML='<div class="map"><div>階段</div><div>VON NEUMANN：一道 instruction</div><div>INTERACTION NET：一次 interaction</div>'+PHASES.map((r,i)=>'<div class="'+(vOn===i||iOn===i?'on':'')+'">'+(i+1)+'</div><div class="'+(vOn===i?'on':'')+'"><b>'+r[0]+'</b>　'+r[1]+'<span class="hwp">電路：'+r[2]+'</span></div><div class="'+(iOn===i?'on':'')+'"><b>'+r[3]+'</b>　'+r[4]+'<span class="hwp">電路：'+r[5]+'</span></div>').join('')+'</div><p class="note">這一頁把一道 instruction 和一輪 interaction 各算一個 step，兩邊的 step 數可以直接放在一起看。一輪裡可以同時做很多對，第 6 章之後會用到。</p>';
+  } else if(ch.extra==='pipe'){
+    const now=sim.tickN, c0=Math.max(1,now-17), cols=[]; for(let c=c0;c<c0+18;c++) cols.push(c);
+    const chart=(log,letters,cls,title)=>{ const rows=log.filter(e=>(e.kill||e.start+3)>=c0).slice(-11);
+      return '<div class="pchart '+cls+'"><h3>'+title+'</h3><table><tr><th>cycle</th>'+cols.map(c=>'<th class="'+(c===now?'nc':'')+'">'+c+'</th>').join('')+'</tr>'+(rows.length?rows.map(e=>'<tr><td>'+esc(e.label)+'</td>'+cols.map(c=>{ const k=c-e.start; if(k<0||k>3||c>now||(e.kill&&c>e.kill)) return '<td class="'+(c===now?'nc':'')+'"></td>'; const dead=e.kill&&c===e.kill; return '<td class="'+(dead?'x':'s'+k)+(c===now?' nc':'')+'">'+(dead?'✕':letters[k])+'</td>'; }).join('')+'</tr>').join(''):'<tr><td class="none" colspan="'+(cols.length+1)+'">還沒開始</td></tr>')+'</table></div>'; };
+    const key='pipe|'+exIdx; let bars=barCache.get(key);
+    if(!bars){ const ex=EX[exIdx], m0=measure(ex,'seq'), p1=measurePipe(ex,'tiles',1), p4=measurePipe(ex,'tiles',2);
+      bars=[{label:'von Neumann：一道做完才做下一道',v:m0.vnSteps*4,cls:'v'},{label:'von Neumann：pipeline',v:p1.vnCycles,cls:'v',key:'vn'},{label:'interaction net（1 個 tile）：一對做完才做下一對',v:m0.rounds*4},{label:'interaction net（1 個 tile）：疊著做',v:p1.inCycles,key:'t1'},{label:'interaction net（4 個 tile）：疊著做',v:p4.inCycles,key:'t2'}]; bars.kill=p1.bubbles; barCache.set(key,bars); }
+    const mx=Math.max(...bars.map(i=>i.v));
+    box.innerHTML='<div class="pcharts">'+chart(sim.vnLog,['F','D','X','W'],'v','von Neumann：每一道 instruction 在哪個 cycle 走到哪個階段')+chart(sim.inLog,['對','拆','長','接'],'i','interaction net：每一對在哪個 cycle 走到哪個階段')+'</div><p class="note">讀法：一列是一件工作，往右是時間。同一欄裡有幾格有字，那個 cycle 就有幾件工作疊在一起。左邊的 ✕ 是走錯路被作廢的 instruction。右邊每一對的四格一定連在一起，可是下一對要等到上一對「接」完才會出現在 queue 裡。</p><h3>做完「'+EX[exIdx].short+'」要幾個 cycle</h3><div class="barlist">'+bars.map(i=>'<span class="'+(i.key===modeKey||i.key==='vn'?'cur':'')+'">'+i.label+'</span><div class="track"><div class="fill '+(i.cls||'')+'" style="width:'+(100*i.v/mx).toFixed(1)+'%"></div></div><span class="num '+(i.key===modeKey||i.key==='vn'?'cur':'')+'">'+i.v+'</span>').join('')+'</div><p class="note">不疊的時候，一道 instruction 或一對 active pair 各佔四個 cycle。左邊的 pipeline 另外有 '+bars.kill+' 道 instruction 抓進來又作廢。粗體是現在畫面上跑的做法。</p>';
+  } else if(ch.extra==='scale'){
+    if(box.dataset.k!==String(chapter)){ box.dataset.k=String(chapter); box.innerHTML='<div id="pipeBox"></div><div id="scaleBox"></div>'; renderScale(ch.test,$('#scaleBox')); }
+    const now=sim.tickN, c0=Math.max(1,now-17), cols=[]; for(let c=c0;c<c0+18;c++) cols.push(c);
+    const chart=(log,letters,cls,title)=>{ const rows=log.filter(e=>(e.kill||e.start+3)>=c0).slice(-11);
+      return '<div class="pchart '+cls+'"><h3>'+title+'</h3><table><tr><th>cycle</th>'+cols.map(c=>'<th class="'+(c===now?'nc':'')+'">'+c+'</th>').join('')+'</tr>'+(rows.length?rows.map(e=>'<tr><td>'+esc(e.label)+'</td>'+cols.map(c=>{ const k=c-e.start; if(k<0||k>3||c>now||(e.kill&&c>e.kill)) return '<td class="'+(c===now?'nc':'')+'"></td>'; const dead=e.kill&&c===e.kill; return '<td class="'+(dead?'x':'s'+k)+(c===now?' nc':'')+'">'+(dead?'✕':letters[k])+'</td>'; }).join('')+'</tr>').join(''):'<tr><td class="none" colspan="'+(cols.length+1)+'">還沒開始</td></tr>')+'</table></div>'; };
+    $('#pipeBox').innerHTML='<div class="pcharts">'+chart(sim.vnLog,['F','D','X','W'],'v','von Neumann：每一道 instruction 在哪個 cycle 走到哪個階段')+chart(sim.inLog,['對','拆','長','接'],'i','interaction net：每一對在哪個 cycle 走到哪個階段')+'</div><p class="note">讀法：一列是一件工作，往右是時間。同一欄有幾格有字，那個 cycle 就有幾件工作疊在一起。左邊的 ✕ 是分支猜錯之後作廢的 instruction。</p>';
+  } else if(ch.extra==='rules'){
+    const key='rules|'+exIdx;
+    if(box.dataset.k!==key){ box.dataset.k=key; box.innerHTML='<h3>「'+sim.ex.short+'」這個小例子用到的規則</h3><div class="cards mini"></div><p class="note">六條規則的完整圖示在這一頁下方的「兩台機器各自的全部規則」。還沒出現的「δ ⋈ list 的一格」會在第 8 章用到。</p>';
+      const host=box.querySelector('.cards'); for(const k of sim.ex.rules) host.appendChild(makeCard(CARDS.find(c=>c.k===k))); }
+  } else if(ch.extra==='orders'){
+    const n=orders.size;
+    box.innerHTML='<p class="note" style="color:var(--ink)">'+(n?'這一章你已經用 <b>'+n+'</b> 種不同的順序做完，每一次的結果都是 <b>'+sim.ex.answer+'</b>。':'做完一次之後，這裡會記下你用過幾種不同的順序。')+'</p>';
+  } else if(ch.extra==='bars'){
+    const key=exIdx+'|'+chapter; let items=barCache.get(key);
+    if(!items){ const ex=EX[exIdx], m0=measure(ex,'seq');
+      items=[{label:'von Neumann（一個 core）',v:m0.vnSteps,cls:'v',key:'vn',unit:' 道'}].concat(ch.bars.map(k=>{ const m=k==='seq'?m0:measure(ex,MODES[k].mode,MODES[k].g); return {label:'interaction net：'+(k==='par'?(ch.tilesCh?'tile 不限':'能做的全做'):MODES[k].label),v:m.rounds,key:k,unit:' 輪'}; }));
+      items.work=m0.interactions; barCache.set(key,items); }
+    const mx=Math.max(...items.map(i=>i.v));
+    box.innerHTML='<h3>做完「'+EX[exIdx].short+'」要幾個 step</h3><div class="barlist">'+items.map(i=>'<span class="'+(i.key===modeKey?'cur':'')+'">'+i.label+'</span><div class="track"><div class="fill '+(i.cls||'')+'" style="width:'+(100*i.v/mx).toFixed(1)+'%"></div></div><span class="num '+(i.key===modeKey?'cur':'')+'">'+i.v+i.unit+'</span>').join('')+'</div><p class="note">左邊一道 instruction 算一個 step，右邊一輪算一個 step。右邊不管用哪一種做法，工作量都是 '+items.work+' 次 interaction；差別在一輪裡同時做幾對。粗體是右邊現在用的做法。</p>';
+  }
+}
+// ───────── 同一個測試把資料放大：折線圖 + 數字表
+const SER={vn:{name:'von Neumann',short:'左邊',c:'--ch-vn'},vnAlt:{name:'von Neumann，兩個迴圈手動合併',short:'左邊（合併）',c:'--ch-alt',dash:1},vnEasy:{name:'von Neumann，換成好猜的資料',short:'左邊（好猜）',c:'--ch-alt',dash:1},
+  t1:{name:'interaction net，1 個 tile',short:'右邊 1 tile',c:'--ch-in'},t2:{name:'interaction net，4 個 tile',short:'右邊 4 tile',c:'--ch-in'},t4:{name:'interaction net，16 個 tile',short:'右邊 16 tile',c:'--ch-in16'},
+  par:{name:'interaction net，tile 不限',short:'右邊不限',c:'--ch-in'},ans1:{name:'interaction net，1 個 tile，答案出來的時間',short:'右邊（答案）',c:'--ch-ans',dash:1}};
+const niceStep=x=>{ const p=Math.pow(10,Math.floor(Math.log10(x))), f=x/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; };
+const times=r=>r>=9.5?Math.round(r)+'':r.toFixed(1);
+const versus=(vn,v)=>v===vn?'一樣':v<vn?'快 '+times(vn/v)+' 倍':'慢 '+times(v/vn)+' 倍';
+function renderScale(test,host){
+  const xs=test.sizes, keys=test.series, rows=keys.map(k=>xs.map(n=>scalePoint(test,n,k))), last=xs.length-1;
+  const W=640,H=300,L=46,R=124,T=18,Bm=42, max=Math.max(...rows.flat()), step=niceStep(max/4), top=Math.ceil(max/step)*step;
+  const xmax=xs[last], X=i=>L+(W-L-R)*xs[i]/xmax, Y=v=>T+(H-T-Bm)*(1-v/top), col=k=>'var('+SER[k].c+')';
+  let g='';
+  for(let v=0;v<=top+1e-9;v+=step) g+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text class="ax" x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+v+'</text>';
+  g+='<line class="grid" x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(H-Bm)+'"/>'; xs.forEach((n,i)=>{ g+='<line class="grid" x1="'+X(i)+'" x2="'+X(i)+'" y1="'+(H-Bm)+'" y2="'+(H-Bm+5)+'"/><text class="ax" x="'+X(i)+'" y="'+(H-Bm+19)+'" text-anchor="middle">'+n+'</text>'; });
+  g+='<text class="ax" x="'+((L+W-R)/2)+'" y="'+(H-5)+'" text-anchor="middle">'+test.xlabel+'</text><text class="ax" x="'+(L-8)+'" y="10" text-anchor="end">cycle</text><line class="guide" id="scGuide" y1="'+T+'" y2="'+(H-Bm)+'" x1="0" x2="0" visibility="hidden"/>';
+  keys.forEach((k,j)=>{ g+='<path class="ln" style="stroke:'+col(k)+'"'+(SER[k].dash?' stroke-dasharray="6 5"':'')+' d="M'+rows[j].map((v,i)=>X(i)+' '+Y(v)).join(' L')+'"/>'+rows[j].map((v,i)=>'<circle class="pt" style="fill:'+col(k)+'" cx="'+X(i)+'" cy="'+Y(v)+'" r="4.5"/>').join(''); });
+  const ends=keys.map((k,j)=>({k,v:rows[j][last],y:Y(rows[j][last])})).sort((a,b)=>a.y-b.y); for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<16) ends[i].y=ends[i-1].y+16;
+  for(const e of ends) g+='<circle style="fill:'+col(e.k)+'" cx="'+(W-R+14)+'" cy="'+e.y+'" r="4"/><text class="lab" x="'+(W-R+23)+'" y="'+(e.y+4)+'">'+SER[e.k].short+'　'+e.v+'</text>';
+  xs.forEach((n,i)=>{ const x0=i?(X(i-1)+X(i))/2:L, x1=i<last?(X(i)+X(i+1))/2:W-R+8; g+='<rect class="hit" data-i="'+i+'" x="'+x0+'" y="'+T+'" width="'+(x1-x0)+'" height="'+(H-T-Bm)+'"/>'; });
+  const tk=test.table, vn=xs.map(n=>scalePoint(test,n,'vn'));
+  host.innerHTML='<h3>把資料放大：做完要幾個 cycle</h3><div class="sc-legend">'+keys.map(k=>'<span><svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke-width="2" style="stroke:'+col(k)+'"'+(SER[k].dash?' stroke-dasharray="6 4"':'')+'/></svg>'+SER[k].name+'</span>').join('')+'</div>'
+    +'<div class="sc-wrap"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+test.short+'：資料放大之後各種做法要幾個 cycle">'+g+'</svg><div class="sc-tip" hidden></div></div>'
+    +'<div class="tablewrap"><table class="sc-table"><thead><tr><th>'+test.xlabel+'</th>'+xs.map(n=>'<th>'+n+'</th>').join('')+'<th>最大時和左邊比</th></tr></thead><tbody>'+tk.map(k=>'<tr><th>'+SER[k].name+'</th>'+xs.map(n=>'<td>'+scalePoint(test,n,k)+'</td>').join('')+'<td>'+(k==='vn'?'—':versus(vn[last],scalePoint(test,xs[last],k)))+'</td></tr>').join('')+'</tbody></table></div>'
+    +'<p class="note">每一格都是實際跑出來的 cycle 數。動畫演的是其中比較小的一個（'+test.n0+'）。</p>';
+  const svg=host.querySelector('svg'), tip=host.querySelector('.sc-tip'), guide=host.querySelector('#scGuide');
+  const show=i=>{ guide.setAttribute('x1',X(i)); guide.setAttribute('x2',X(i)); guide.setAttribute('visibility','visible');
+    tip.innerHTML='<b>'+test.xlabel+' '+xs[i]+'</b>'+keys.map((k,j)=>'<span><i style="background:'+col(k)+'"></i>'+SER[k].short+'<em>'+rows[j][i]+'</em></span>').join(''); tip.hidden=false;
+    tip.style.left=(X(i)/W*100)+'%'; tip.classList.toggle('flip',i>=last); };
+  svg.addEventListener('pointermove',e=>{ const h=e.target.closest('.hit'); if(h) show(+h.dataset.i); });
+  svg.addEventListener('pointerdown',e=>{ const h=e.target.closest('.hit'); if(h) show(+h.dataset.i); });
+  svg.addEventListener('pointerleave',()=>{ tip.hidden=true; guide.setAttribute('visibility','hidden'); });
+}
+const exName=c=>c.pick==='seg'?(c.picks.length>2?'四個小例子':c.picks.map(i=>EX[i].short).join('、')):c.pick?'自己選':EX[c.ex].short;
+function renderChapter(){
+  const ch=CHAPTERS[chapter], nx=CHAPTERS[chapter+1];
+  document.querySelectorAll('#chapters button').forEach((b,i)=>{ b.setAttribute('aria-current',i===chapter?'true':'false'); b.classList.toggle('seen',seen.has(i)); });
+  $('#nowN').textContent='測試 '+(chapter+1)+' ／ 共 '+CHAPTERS.length+' 個'; $('#nowTitle').textContent=ch.title; $('#nowLede').textContent=ch.lede;
+  { const v=$('#nowVerdict'); v.className='verdict '+ch.test.kind; v.innerHTML='<b>結論</b>　'+ch.test.verdict; }
+  $('#bPrev').hidden=chapter===0; $('#bNext').hidden=!nx;
+  if(nx){ $('#bNext').textContent='下一個：'+nx.title+' →'; $('#bNextDone').textContent='跑完了，下一個測試：'+nx.title+' →'; }
+  $('#chapter').innerHTML='<div class="try"><b>試試看</b>　'+ch.tryit+'</div><div class="extra" id="extra"></div><h2>為什麼會這樣</h2><div class="rows"><div class="hd"></div><div class="hd v">VON NEUMANN</div><div class="hd i">INTERACTION NET</div>'+ch.rows.map(r=>'<div class="q">'+r[0]+'</div><div class="v">'+r[1]+'</div><div class="i">'+r[2]+'</div>').join('')+'</div>'+(nx?'<button class="nextcard" id="bNextCard"><span class="k">接著看下一個測試（'+KIND[nx.test.kind]+'）</span><span class="t">測試 '+(chapter+2)+'　'+nx.title+'</span><span class="e">'+nx.test.what+'</span><span class="go" aria-hidden="true">→</span></button>':'<p class="note">這是最後一個測試。上面的清單可以隨時回去重看。</p>');
+  $('#modeGroup').hidden=!ch.modes.length;
+  $('#modes').innerHTML=ch.modes.map(k=>'<button data-k="'+k+'" aria-pressed="'+(k===modeKey)+'">'+(k==='par'&&ch.tilesCh?'不限':MODES[k].label)+'</button>').join('');
+  $('#presetGroup').hidden=!ch.pick;
+  if(ch.pick){ const seg=ch.pick==='seg'; $('#pickLabel').textContent=ch.pickLabel; $('#pickSeg').hidden=!seg; $('#preset').hidden=seg;
+    if(seg) $('#pickSeg').innerHTML=ch.picks.map(i=>'<button data-ex="'+i+'" aria-pressed="'+(i===exIdx)+'">'+EX[i].short+'</button>').join('');
+    else{ $('#preset').innerHTML=ch.picks.map(i=>'<option value="'+i+'">'+EX[i].short+'</option>').join(''); $('#preset').value=String(exIdx); } }
+}
+function goChapter(i,keepHash,scroll){
+  chapter=clamp(i,0,CHAPTERS.length-1); const ch=CHAPTERS[chapter]; exIdx=ch.ex; modeKey=ch.mode; orders.clear(); selHw=null;
+  renderChapter(); reset();
+  if(scroll){ const el=$('#now'); if(el.getBoundingClientRect().top<0||el.getBoundingClientRect().top>window.innerHeight*0.5) el.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'}); }
+  if(!keepHash){ try{ history.replaceState(null,'','#ch'+(chapter+1)); }catch(_){ } }
+}
+
+// rule cards (2D notation)
+const NS='http://www.w3.org/2000/svg';
+function ruleSVG(spec){
+  const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 262 96'); svg.setAttribute('role','img');
+  const add=(tag,at,txt)=>{ const e=document.createElementNS(NS,tag); for(const k in at) e.setAttribute(k,at[k]); if(txt!=null) e.textContent=txt; svg.appendChild(e); return e; };
+  const port=(n,i)=>{ const a=n.a*Math.PI/180, c=Math.cos(a), s=Math.sin(a); if(i===0) return {x:n.x+c*14,y:n.y+s*14,nx:c,ny:s};
+    const bx=n.x-c*10, by=n.y-s*10, off=n.ar===2?(i===1?9:-9):0; return {x:bx-s*off,y:by+c*off,nx:-c,ny:-s}; };
+  const end=e=>typeof e==='string'?(()=>{ const [k,i]=e.split('.'); return port(spec.n[+k],+i); })():{x:e[0],y:e[1],nx:0,ny:0,label:e[2]};
+  for(const w of spec.w){ const A2=end(w[0]),B2=end(w[1]),h=13;
+    add('path',{d:'M'+A2.x+' '+A2.y+' C'+(A2.x+A2.nx*h)+' '+(A2.y+A2.ny*h)+','+(B2.x+B2.nx*h)+' '+(B2.y+B2.ny*h)+','+B2.x+' '+B2.y,fill:'none',stroke:w[2]?'var(--hot)':'var(--muted)','stroke-width':w[2]?2.4:1.5,'stroke-linecap':'round'});
+    for(const E of [A2,B2]) if(E.label) add('text',{x:E.x,y:E.y-5,'font-size':10,'font-family':'var(--mono)',fill:'var(--muted)','text-anchor':'middle'},E.label); }
+  for(const n of spec.n){ const a=n.a*Math.PI/180,c=Math.cos(a),s=Math.sin(a); const p=[[n.x+c*14,n.y+s*14],[n.x-c*10-s*13,n.y-s*10+c*13],[n.x-c*10+s*13,n.y-s*10-c*13]];
+    add('polygon',{points:p.map(q=>q.join(',')).join(' '),fill:'var(--'+TYPE[n.t]+')',stroke:'var(--surface)','stroke-width':1,'stroke-linejoin':'round'});
+    add('text',{x:n.x-c*2.5,y:n.y-s*2.5+3.4,'font-size':n.l.length>2?7.2:n.l.length>1?8.6:10.5,'font-weight':700,'font-family':'var(--sans)',fill:'#fff','text-anchor':'middle'},n.l); }
+  if(spec.box){ const b=spec.box; add('rect',{x:b.x,y:b.y,width:b.w,height:b.h,rx:8,fill:'none',stroke:'var(--c-mul)','stroke-width':1.6,'stroke-dasharray':'5 4'}); add('text',{x:b.x+b.w/2,y:b.y+b.h/2+4,'font-size':11,'font-family':'var(--sans)',fill:'var(--ink)','text-anchor':'middle'},b.label); }
+  add('path',{d:'M116 48 H140 M134 43 L140 48 L134 53',fill:'none',stroke:'var(--ink)','stroke-width':1.6,'stroke-linecap':'round','stroke-linejoin':'round'});
+  return svg;
+}
+const N=(t,l,ar,x,y,a)=>({t,l,ar,x,y,a}), HOT=['0.0','1.0',1];
+const SPECS={
+  OP:{n:[N('OP','+',2,44,48,0),N('NUM','a',0,72,48,180),N('OP1','a+',1,200,48,180)],w:[HOT,['0.1',[12,68,'b']],['0.2',[12,28,'r']],['2.0',[152,48,'b']],['2.1',[250,48,'r']]]},
+  OP1:{n:[N('OP1','a+',1,44,48,0),N('NUM','b',0,72,48,180),N('NUM','a+b',0,200,48,0)],w:[HOT,['0.1',[12,48,'r']],['2.0',[250,48,'r']]]},
+  FN:{n:[N('FN','f',2,44,48,0),N('NUM','v',0,72,48,180)],w:[HOT,['0.1',[12,68,'x']],['0.2',[12,28,'r']],[[176,60],[152,70,'x']],[[176,36],[152,26,'r']]],box:{x:176,y:24,w:66,h:48,label:'f 的圖'}},
+  DUPN:{n:[N('DUP','δ',2,44,48,0),N('NUM','n',0,72,48,180),N('NUM','n',0,200,28,180),N('NUM','n',0,200,68,180)],w:[HOT,['0.1',[12,68,'a']],['0.2',[12,28,'b']],['2.0',[152,28,'b']],['3.0',[152,68,'a']]]},
+  DUPC:{n:[N('DUP','δ',2,44,48,0),N('CONS','::',2,72,48,180),N('CONS','::',2,176,26,180),N('CONS','::',2,176,70,180),N('DUP','δ',2,226,26,0),N('DUP','δ',2,226,70,0)],
+    w:[HOT,['0.1',[12,68,'a']],['0.2',[12,28,'b']],['1.1',[104,30,'h']],['1.2',[104,66,'t']],['2.0',[152,26,'b']],['3.0',[152,70,'a']],['4.0',[254,26,'h']],['5.0',[254,70,'t']],['2.1','4.2'],['2.2','5.2'],['3.1','4.1'],['3.2','5.1']]},
+  ERA:{n:[N('ERA','ε',0,44,48,0),N('CONS','::',2,72,48,180),N('ERA','ε',0,196,28,0),N('ERA','ε',0,196,68,0)],w:[HOT,['1.1',[104,30,'h']],['1.2',[104,66,'t']],['2.0',[246,28,'h']],['3.0',[246,68,'t']]]}
+};
+function makeCard(k){
+  const d=document.createElement('div'); d.className='card'; d.dataset.rule=k.k;
+  d.innerHTML='<h4>'+k.name+'</h4>'; d.appendChild(ruleSVG(SPECS[k.k]));
+  const p=document.createElement('p'); p.innerHTML='<b>'+k.eq+'</b><br>'+k.make+'<br>左邊的機器：'+k.vn+'。'; d.appendChild(p); return d;
+}
+function buildStatic(){
+  $('#chapters').innerHTML=['win','lose'].map(kd=>'<div class="toc-group '+kd+'"><div class="toc-gl"><b>'+KIND[kd]+'</b>'+(kd==='win'?'的四個情況':'的四個情況')+'</div><div class="toc-grid">'+CHAPTERS.map((c,i)=>c.test.kind!==kd?'':'<button data-i="'+i+'"><span class="n">測試 '+(i+1)+'<span class="ok" title="跑完過">✓</span></span><span class="t">'+c.title+'</span><span class="e" id="score'+i+'">計算中…</span></button>').join('')+'</div></div>').join('');
+  // 每個測試在最大的資料下誰比較快（放到畫面出來之後再算）
+  CHAPTERS.forEach((c,i)=>setTimeout(()=>{ const t=c.test, n=t.sizes[t.sizes.length-1], vn=scalePoint(t,n,'vn'), best=Math.min(scalePoint(t,n,'t1'),scalePoint(t,n,'t4'));
+    $('#score'+i).textContent=(best<vn?'右邊快 '+times(vn/best)+' 倍':best>vn?'左邊快 '+times(best/vn)+' 倍':'一樣快')+'（'+AT[t.key](n)+'）'; },60+i*40));
+  $('#bPrev').addEventListener('click',()=>goChapter(chapter-1));
+  for(const id of ['#bNext','#bNextDone']) $(id).addEventListener('click',()=>goChapter(chapter+1,false,true));
+  $('#chapter').addEventListener('click',e=>{ if(e.target.closest('#bNextCard')) goChapter(chapter+1,false,true); });
+  $('#chapters').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) goChapter(+b.dataset.i); });
+  $('#pickSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; exIdx=+b.dataset.ex; renderChapter(); reset(); });
+  $('#preset').addEventListener('change',e=>{ exIdx=+e.target.value; reset(); });
+  $('#modes').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; modeKey=b.dataset.k; renderChapter(); reset(); });
+  $('#bStep').addEventListener('click',()=>{ setPlaying(false); stepWhole(); });
+  $('#bTick').addEventListener('click',()=>{ setPlaying(false); clearTimeout(stepTimer); tickOnce(); });
+  $('#bPlay').addEventListener('click',()=>setPlaying(!playing));
+  $('#bEnd').addEventListener('click',()=>{ setPlaying(false); clearTimeout(stepTimer); let g=0; while(sim.tick()&&g++<200000); selected=null; tickTime=performance.now(); animDur=reduced?1:500; refresh(); });
+  $('#bReset').addEventListener('click',reset);
+  const zoom=(v,k)=>()=>{ v.zoom=clamp(v.zoom*k,0.5,3); v.lastUser=performance.now(); };
+  $('#vnIn').addEventListener('click',zoom(vnV,1.2)); $('#vnOut').addEventListener('click',zoom(vnV,1/1.2));
+  $('#inIn').addEventListener('click',zoom(inV,1.2)); $('#inOut').addEventListener('click',zoom(inV,1/1.2));
+  $('#vnHome').addEventListener('click',()=>{ vnV.az=vnV.home.az; vnV.el=vnV.home.el; vnV.zoom=1; });
+  $('#inHome').addEventListener('click',()=>{ inV.az=inV.home.az; inV.el=inV.home.el; inV.zoom=1; inV.swT=null; inV.lastUser=-1e9; });
+  $('#inRot').addEventListener('click',e=>{ autoRot=!autoRot; e.currentTarget.setAttribute('aria-pressed',String(autoRot)); });
+  document.addEventListener('keydown',e=>{ if(/INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target.tagName)) return; if(e.key==='ArrowRight'){ e.preventDefault(); setPlaying(false); stepWhole(); } else if(e.key===' '){ e.preventDefault(); setPlaying(!playing); } });
+  window.addEventListener('hashchange',()=>{ const m=/^#ch(\d+)$/.exec(location.hash); if(m&&+m[1]-1!==chapter) goChapter(+m[1]-1,true); });
+}
+let lastFrame=0, frameErr=false;
+function frame(now){
+  const dt=Math.min(0.05,(now-lastFrame)/1000||0.016); lastFrame=now;
+  try{ drawVN(now); drawIN(now,dt); }catch(e){ if(!frameErr){ frameErr=true; console.error(e); document.documentElement.dataset.err=String(e&&e.stack||e).slice(0,400); } }
+  requestAnimationFrame(frame);
+}
+buildStatic();
+{ const q=new URLSearchParams(location.search), m=/^#ch(\d+)$/.exec(location.hash);
+  goChapter(q.get('ch')?+q.get('ch')-1:m?+m[1]-1:0,true);
+  if(q.get('ex')&&EX[+q.get('ex')]){ exIdx=+q.get('ex'); renderChapter(); reset(); }
+  if(q.get('mode')&&MODES[q.get('mode')]){ modeKey=q.get('mode'); renderChapter(); reset(); }
+  const t=+(q.get('t')||0); for(let i=0;i<t;i++){ sim.tick(); for(let k=0;k<40;k++) layoutStep(sim.net); } if(t){ for(let i=0;i<160;i++) layoutStep(sim.net); tickTime=performance.now()-1e5; refresh(); }
+  if(q.get('static')){ autoRot=false; } if(q.get('az')) inV.az=+q.get('az'); if(q.get('play')){ $('#speed').value=100; setPlaying(true); } }
+requestAnimationFrame(frame);
+})();
+</script>
+<!--END-PAGE-->
+<p style="margin:28px auto 24px;max-width:960px;padding:0 18px;font:15px/1.6 system-ui,sans-serif"><a href="../index.html" style="color:inherit">← 回到 Reading Frostbite 入口頁</a></p>
+</body></html>
