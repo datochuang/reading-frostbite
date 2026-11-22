@@ -74,7 +74,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
   <ul>
     <li>The article makes three claims: a new CPU architecture, 4.59 times the performance per watt, and a design done by AI.</li>
     <li>The architecture is an old kind of machine, rebuilt. Its instruction set is the interaction net, a way of computing published in 1990, in the same family as the dataflow and graph-reduction machines of the 1980s.</li>
-    <li>The performance number comes from simulation and from one comparison against a small, unnamed CPU core. A real chip would confirm the number. It would not widen the comparison.</li>
+    <li>The performance number comes from simulation and from one comparison against a small, unnamed CPU core. A real chip would test the number. It would not widen the comparison.</li>
     <li>The design flow is the part worth preparing for. AI makes each attempt cheaper. It does not make an attempt right, and it depends on a specification that a machine can check.</li>
   </ul>
 </div>
@@ -98,7 +98,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 
 <p>On 18 November 2026 Architect Labs published <a href="https://architectlabs.com/blog/frostbite">“Introducing Frostbite: A new CPU architecture discovered, designed, and verified end-to-end by AI”</a>. The article makes three claims that can be judged separately.</p>
 
-<p><strong>A new CPU architecture.</strong> The article calls Frostbite “a general-purpose CPU with a new instruction set built from the ground up”. The instruction set is the interaction net, described in section 5. The unit used for comparison is one quad, a two-by-two grid of tiles, paired with four “L3” nodes: 0.792 mm² on a 7 nm process, with timing closed at 500 MHz in the final layout. No chip has been built; the article describes its own power figures as “pre-silicon”. It names no target market. On what the design is good at, it says the architecture “does most strongly on highly parallelizable tasks”.</p>
+<p><strong>A new CPU architecture.</strong> The article calls Frostbite “a general-purpose CPU with a new instruction set built from the ground up”. The instruction set is the interaction net, described in section 5. The unit used for comparison is one quad, a two-by-two grid of tiles (a tile is one small processing unit with its own memory), paired with four “L3” nodes: 0.792 mm² on a 7 nm process, with timing closed at 500 MHz in the final layout. No chip has been built; the article describes its own power figures as “pre-silicon”. It names no target market. On what the design is good at, it says the architecture “does most strongly on highly parallelizable tasks”.</p>
 
 <p><strong>Better performance per watt.</strong> The headline number is a geometric mean of 4.59 times the performance per watt of a comparison core, over 25 test programs. The comparison core is one “superscalar, dual-issue, in-order” CPU core of 0.895 mm² in the same process. The article does not name it, “for legal reasons”. Individual programs range from 1.15 times (Fibonacci) to 23.12 times (a two-dimensional convolution).</p>
 
@@ -125,14 +125,14 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 <p>Three companies appear in this story. One old idea, the interaction net, connects them.</p>
 
 <ul>
-  <li><strong>Higher Order Company</strong> makes HVM, software that runs interaction nets on today's CPUs and GPUs. Its current language, Bend 2, no longer uses them. Its founder has reported a seed round of about $4 million in 2023.</li>
+  <li><strong>Higher Order Company</strong> makes HVM, software that runs interaction nets on today's CPUs and GPUs. Its current language, Bend 2, no longer uses them. Its founder has reported a seed round of $4 million to $4.5 million in 2023; his two statements differ.</li>
   <li><strong>Tendrils Compute</strong> makes the Vine programming language and says it is building a processor “to have thousands of cores operating in parallel”. On 10 November 2026 it <a href="https://tendrils.co/blog/2026-11-10/30m-raised">announced $30 million</a> in funding led by Benchmark, which co-led the Series A round of the chip maker Cerebras in 2016. As of November 2026 it has not published chip measurements.</li>
   <li><strong>Architect Labs</strong> builds an AI system that designs chips. On 18 June 2026 it <a href="https://architectlabs.com/blog/seed">announced a $24 million seed round</a> led by Kindred Ventures, a seed-stage fund. Frostbite is its second published design; the first, in August 2026, was an AI accelerator called Redwood.</li>
 </ul>
 
 <p>The two hardware efforts are connected: Frostbite's test programs are written in Vine, the language made by Tendrils.</p>
 
-<p>Two points about the money are easy to miss. The $24 million seed was announced five months before Frostbite was, so it is hard to read it as a bet on this particular architecture. <span class="own">this guide's inference</span> And the larger round went to the company that has published no design figures yet. Funding shows attention. It is not yet evidence that the technology works.</p>
+<p>Two points about the money are easy to miss. The $24 million seed was announced five months before Frostbite was, so it is hard to read it as a bet on this particular architecture <span class="own">this guide's inference</span>. The larger of the two rounds went to Tendrils, which has not yet published design figures. Funding shows attention. It is not yet evidence that the technology works.</p>
 
 <figure><a href="img/companies.jpg"><img src="img/companies.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: three companies, what each builds, and who funded them."></a>
 <figcaption>Figure 3. Who builds what, and who paid for it. Amounts and investors are as announced by the companies.</figcaption></figure>
@@ -171,7 +171,6 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 <figure><a href="img/ownchip.jpg"><img src="img/ownchip.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: spreadsheet, database query and bytecode all running on one ordinary CPU."></a>
 <figcaption>Figure 7. Three abstract machines that live entirely in software.</figcaption></figure>
 
-<p class="note">The explainers <a href="../explainers/computational-model-from-a-resistor-network.html">“What an abstract machine is”</a> and <a href="../explainers/computational-models-and-the-hardware-line.html">“Where hardware should start”</a> cover this thread interactively, in Traditional Chinese.</p>
 
 <h2 id="inet"><span class="k">5 · THREAD 2</span><span>The interaction net and Frostbite</span></h2>
 
@@ -192,7 +191,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 
 <p>Take one job: add up 1,024 numbers, two at a time. An ordinary CPU with one executor performs 1,023 additions one after another, so the time grows with the number of items. On an interaction net each addition takes two small steps, 2,046 in all, but every pair on one level can be done at once. With enough executors the job finishes in 20 rounds: ten levels, two rounds each. The time grows with the number of levels. These counts follow from the rules; nobody measured them.</p>
 
-<p>The promise, then, is to pay a fixed price per step for a gain that grows with the size of the job, on the condition that there are enough executors.</p>
+<p>The promise, then, is to pay a constant factor in steps, here twice as many, for a gain that grows with the size of the job, on the condition that there are enough executors.</p>
 
 <figure><a href="img/promise.jpg"><img src="img/promise.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: adding 1024 numbers with one executor and with many."></a>
 <figcaption>Figure 9. Twice the steps, far fewer rounds.</figcaption></figure>
@@ -203,7 +202,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 
 <ul>
   <li><strong>Likely a good fit:</strong> work made of many independent pieces whose shape is not known in advance, such as tree search, graph traversal, simulation, and compilers and parsers. The pieces run side by side with no locks and no search.</li>
-  <li><strong>Likely a poor fit:</strong> long chains in which each step waits for the last; dense, regular arithmetic that SIMD units and GPUs already do well; and anything that needs today's software.</li>
+  <li><strong>Likely a poor fit:</strong> long chains in which each step waits for the last; dense, regular arithmetic, where it beats a scalar core and where SIMD units and GPUs already do well; and anything that needs existing software.</li>
 </ul>
 
 <p>The article's own results are consistent with this but do not settle it. Its best test is the convolution and its worst is Fibonacci, a chain of dependent steps. It says the design “also outperforms the TCPU on branching, dynamic code”, and gives no figures for that kind of program on its own.</p>
@@ -222,14 +221,14 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 
 <p>Every chip implements some abstract machine, so the question is where the abstract machine came from. Those that grew out of what hardware does cheaply, such as the von Neumann machine, RISC and the GPU, stayed in the mainstream. Those that were worked out first in mathematics or in a programming language, and then given hardware as a replacement for the general-purpose instruction set, did not: Lisp machines, the Prolog machines of Japan's Fifth Generation project, and Java processors. The interaction net belongs to the second group. Its outcome is open.</p>
 
-<p>Ideas from that second group were not wasted. Dataflow machines did not survive as products, and a restricted form of dataflow now runs inside every out-of-order CPU, underneath the existing instruction set, where old software does not have to change.</p>
+<p>Ideas from that second group were not wasted. Dataflow machines did not survive as products, and a restricted form of dataflow now runs inside every out-of-order CPU, underneath the instruction set already in use, where existing software does not have to change.</p>
 
 <figure><a href="img/earlier.jpg"><img src="img/earlier.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: machines that grew out of hardware and machines that came from mathematics or a language."></a>
 <figcaption>Figure 12. Two origins, two records.</figcaption></figure>
 
 <h3>What decides who wins</h3>
 
-<p>Four questions separate the winners from the rest. Does the gain grow with scale? Have ordinary CPUs slowed down? Is a real workload paying first? Can old software come along? The two that decided past cases are the last two, and neither is about architecture. GPUs had gamers buying them years before anyone used them for computing, and existing programs kept running on the CPU beside them. Interaction-net hardware has investors, and investor money is not a paying workload. <span class="own">this guide's inference</span></p>
+<p>Four questions separate the winners from the rest. Does the gain grow with scale? Have ordinary CPUs slowed down? Is a real workload paying first? Can existing software come along? The two that decided past cases are the last two, and neither is about architecture. GPUs had gamers buying them years before anyone used them for computing, and existing programs kept running on the CPU beside them. Interaction-net hardware has investors, and investor money is not a paying workload. <span class="own">this guide's inference</span></p>
 
 <figure><a href="img/win.jpg"><img src="img/win.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: four questions and a scoreboard for GPU, Lisp machine and interaction net hardware."></a>
 <figcaption>Figure 13. The two questions that decide are about buyers and software.</figcaption></figure>
@@ -319,7 +318,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
 
 <h3>What AI changed, and what it did not</h3>
 
-<p>AI lowers the cost of each attempt, so many more designs can be tried. It does not change whether an attempt is right. Every attempt still has to pass the same four gates: masks and fabrication, measurement on silicon, existing software, and a paying workload.</p>
+<p>AI lowers the cost of each attempt, so many more designs can be tried. It does not change whether an attempt is right. A design that ships still has to pass the same four gates: masks and fabrication, measurement on silicon, existing software, and a paying workload.</p>
 
 <p>The article contains a small illustration of the limit. The more attempts are made against a fixed set of tests, the more closely the result fits those tests, which is one way to read the gap between 6.02 times on the tuning set and 3.83 times on the held-out set. <span class="own">this guide's inference</span></p>
 
@@ -382,6 +381,7 @@ footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-si
   <li>Architect Labs, <a href="https://architectlabs.com/blog/frostbite">Introducing Frostbite</a>, 18 November 2026. Source of every Frostbite figure and quotation above.</li>
   <li>Architect Labs, <a href="https://architectlabs.com/blog/redwood">Redwood</a>, 27 August 2026, and <a href="https://architectlabs.com/blog/seed">seed announcement</a>, 18 June 2026.</li>
   <li>Tendrils Compute, <a href="https://tendrils.co/blog/2026-11-10/30m-raised">funding announcement</a>, 10 November 2026, and <a href="https://tendrils.co/blog/2026-04-26/on-inets">On Interaction Nets</a>, April 2026.</li>
+  <li>Higher Order Company, <a href="https://github.com/HigherOrderCO/HVM">HVM</a> and <a href="https://github.com/bendlang/bend">Bend</a> repositories; the seed amount is the founder's own statement on Hacker News (2023) and X (2024), which give $4.5 million and $4 million.</li>
   <li>Yves Lafont, <a href="https://doi.org/10.1145/96709.96718">Interaction Nets</a>, POPL 1990.</li>
   <li>Synopsys, <a href="https://www.design-reuse.com/news/53440/synopsys-dso-ai-driven-chip-designs.html">first 100 commercial tape-outs using DSO.ai</a>, 7 February 2023.</li>
   <li>Cadence, <a href="https://cadencenextgen.q4web.com/Investors/press-releases/press-release-details/2026/Cadence-Unleashes-ChipStack-AI-Super-Agent-Pioneering-a-New-Frontier-in-Chip-Design-and-Verification/default.aspx">ChipStack AI Super Agent announcement</a>, 10 February 2026.</li>

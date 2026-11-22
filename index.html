@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reading Frostbite</title>
-<meta name="description" content="A reader's guide to the Frostbite announcement: a whiteboard deck and five interactive explainers on interaction nets, abstract machines, and what AI changes in chip design.">
+<meta name="description" content="A reader's guide to the Frostbite announcement: an article, a whiteboard deck and three interactive 3D explainers on interaction nets, abstract machines, and what AI changes in chip design.">
 <style>
-/* Layout: one reading column. The deck first, then the five explainers in reading order. */
+/* Layout: one reading column. The article, the deck, then the three explainers in reading order. */
 :root{
   --bg:#f2f4f7; --sheet:#ffffff; --ink:#16202b; --ink-2:#4a5866; --mute:#7b8794;
   --rule:#d3dae2; --marker:#d9530b; --pen:#1d5fbf; --tint-pen:#e8f0fb;
@@ -76,14 +76,14 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
   <h1><span>Reading Frostbite</span></h1>
   <p class="sub">How to read the news about a CPU “discovered, designed, and verified end-to-end by AI”</p>
   <p class="lede">In November 2026 a startup announced Frostbite, a processor design that runs interaction nets in place of a stream of instructions. The announcement reports 4.59 times the performance per watt of a comparison core, and says AI did the work from architecture to verification.</p>
-  <p class="lede">This site collects the background needed to read that announcement, in three forms: an article to read, a whiteboard deck to present, and five interactive explainers. It is written for engineers who know CPUs and RTL and have not met interaction nets before.</p>
+  <p class="lede">This site collects the background needed to read that announcement, in three forms: a long read, a whiteboard deck to present, and three interactive 3D explainers. Start with the long read; the deck carries the same argument for a meeting room, and the explainers let you watch the machines run. It is written for engineers who know CPUs and RTL and have not met interaction nets before.</p>
 </header>
 
 <section>
-  <h2><span>The article: a long read</span></h2>
+  <h2><span>The long read</span></h2>
   <div class="col">
-    <p>The whole argument written out as prose, with the whiteboard drawings as figures. It covers what the article claims, what an abstract machine is, where an interaction net fits, how to read the 4.59× number, and what AI changes in chip design. About fifteen minutes.</p>
-    <a class="btn" href="article/index.html">Read the article</a>
+    <p>The whole argument written out as prose, with the whiteboard drawings as figures. It covers what the Frostbite announcement claims, what an abstract machine is, where an interaction net fits, how to read the 4.59× number, and what AI changes in chip design. About twenty minutes.</p>
+    <a class="btn" href="article/index.html">Read the long read</a>
     <span class="facts">ENGLISH · 24 FIGURES</span>
   </div>
 </section>
@@ -107,26 +107,20 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
 </section>
 
 <section>
-  <h2><span>The explainers: five pages you can operate</span></h2>
+  <h2><span>The explainers: three 3D pages you can operate</span></h2>
   <p class="note col">These pages are written in Traditional Chinese. They read best in order, and each one also stands alone.</p>
   <ol class="pages">
-    <li><span class="n">1</span><a href="explainers/computational-model-from-a-resistor-network.html">What an abstract machine is</a>
-      <span class="zh" lang="zh-Hant">計算模型是什麼</span>
-      <p>No code. One resistor network is solved three ways, and you count the steps each way takes.</p></li>
-    <li><span class="n">2</span><a href="explainers/computational-models-and-the-hardware-line.html">Where hardware should start</a>
-      <span class="zh" lang="zh-Hant">硬體該做到哪一層</span>
-      <p>Fifty years of chips built for a higher-level abstract machine: which stayed, which left, and the four things that separated them.</p></li>
-    <li><span class="n">3</span><a href="explainers/interaction-net-vs-von-neumann.html">Interaction net against von Neumann</a>
+    <li><span class="n">1</span><a href="explainers/interaction-net-vs-von-neumann.html">Interaction net against von Neumann</a>
       <span class="zh" lang="zh-Hant">Interaction Net 對照 von Neumann</span>
-      <p>The same problem on both machines, one step at a time, with every read and write shown side by side.</p></li>
-    <li><span class="n">4</span><a href="explainers/interaction-net-test-cases.html">Eight tests for an interaction net</a>
+      <p>The same problem on both machines, one step at a time, as two 3D scenes side by side, with every read and write shown.</p></li>
+    <li><span class="n">2</span><a href="explainers/interaction-net-test-cases.html">Eight tests for an interaction net</a>
       <span class="zh" lang="zh-Hant">Interaction Net 八個測試</span>
-      <p>Eight small problems that show where an interaction net pays off and where it loses.</p></li>
-    <li><span class="n">5</span><a href="explainers/interaction-net-history.html">Thirty-six years of interaction nets</a>
+      <p>Eight small problems in 3D that show where an interaction net pays off and where it loses.</p></li>
+    <li><span class="n">3</span><a href="explainers/interaction-net-history.html">Thirty-six years of interaction nets</a>
       <span class="zh" lang="zh-Hant">Interaction Net 三十六年</span>
-      <p>The history on four tracks, theory, software, hardware and business, as a 3D timeline you can drag.</p></li>
+      <p>The history on four tracks, theory, software, hardware and business, as a 3D timeline you can drag, ending with a line of judgements on what is real and what is not yet shown.</p></li>
   </ol>
-  <p class="term">A note on words. The deck says “abstract machine” where textbooks say “model of computation”, because “model” is now easily read as “AI model”. The explainers use the Chinese term <span lang="zh-Hant">計算模型</span>. All three mean the same thing: a set of rules that fixes what the state is, what one step does, and who decides the next step.</p>
+  <p class="term">A note on words. The deck says “abstract machine” where textbooks say “model of computation”, because “model” is now easily read as “AI model”. The article and the explainers use “abstract machine” too; the usual Chinese term is <span lang="zh-Hant">計算模型</span>. All of these mean the same thing: a set of rules that fixes what the state is, what one step does, and who decides the next step.</p>
 </section>
 
 <section class="about">
@@ -136,7 +130,7 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
     <li>The author has no connection with the companies mentioned and used only what they have published.</li>
     <li>Every Frostbite number comes from the announcing company's own article, from simulation before any chip exists. As of November 2026 no independent check was public.</li>
     <li>The whiteboard drawings were produced by an image-generation model from written prompts, and a person checked the text on each one. The text and the explainers were prepared with AI assistance.</li>
-    <li>Information is current to 22 November 2026. If you find an error, please open an issue in this repository.</li>
+    <li>Information is current to 22 November 2026. If you find an error, please open an issue in <a href="https://github.com/datochuang/reading-frostbite/issues">the GitHub repository</a>.</li>
     <li>Text and images are released under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Company and product names belong to their owners.</li>
   </ul>
 </section>

@@ -243,9 +243,9 @@ footer a{color:var(--inet)}
 <div class="wrap">
   <header class="top">
     <p class="eyebrow">給熟悉 von Neumann 架構的人</p>
-    <h1>同一段程式，兩種計算模型</h1>
-    <p class="lede">左邊是你熟悉的 von Neumann 模型：PC、instruction、可以隨意讀寫的 memory。右邊是 interaction net：一張會自己改寫的圖。兩邊都是計算模型，也就是「程式長什麼樣、跑一步是什麼意思」的一套規則。下面分成十章，每一章講一個主題，各用一段不同的小程式讓兩邊一步一步對照著跑。</p>
-<p class="lede"><b>還不清楚「計算模型」是什麼，先看<a href="computational-model-from-a-resistor-network.html" target="_blank" rel="noopener">入門頁：計算模型是什麼</a>。</b>那一頁不用程式，從一張電阻網路開始。這一頁每一章先寫出題目（例如「一筆訂單的應付金額」）。題目下面那段程式是一般程式語言的寫法，也就是把題目寫成 von Neumann 模型之後的樣子；右邊的圖是同一題寫成 interaction net。</p>
+    <h1>同一段程式，兩種 abstract machine</h1>
+    <p class="lede">左邊是你熟悉的 von Neumann machine：PC、instruction、可以隨意讀寫的 memory。右邊是 interaction net：一張會自己改寫的圖。兩邊都是 abstract machine，也就是「程式長什麼樣、跑一步是什麼意思」的一套規則。下面分成十章，每一章講一個主題，各用一段不同的小程式讓兩邊一步一步對照著跑。</p>
+<p class="lede"><b>還不清楚 abstract machine 是什麼，先看<a href="../article/index.html#machine">文章 How to read the Frostbite announcement 的第 4 節</a>。</b>這一頁每一章先寫出題目（例如「一筆訂單的應付金額」）。題目下面那段程式是一般程式語言的寫法，也就是把題目寫成 von Neumann machine 之後的樣子；右邊的圖是同一題寫成 interaction net。</p>
     <p class="lede">右邊這張圖可以交給兩種東西執行：一般 CPU 上的軟體 runtime，或專用的硬體。右邊面板上方的「由誰執行」可以切換。Interaction net 從 1990 年提出到 2025 年，都是用前一種方式在跑；頁面最下面的<a href="#why" id="toWhy">兩個段落</a>說明這件事，以及當初相信它有用的三個理由。</p>
   </header>
 
@@ -265,7 +265,7 @@ footer a{color:var(--inet)}
     <div class="task-q">
       <span class="task-lb">這一章的題目</span>
       <div class="task-title" id="taskTitle"></div>
-      <span class="task-lb" style="margin-top:8px">下面是這一題寫成一般程式的樣子，左邊的 von Neumann 模型照它一步一步做。右邊的圖是同一題的另一種寫法。</span>
+      <span class="task-lb" style="margin-top:8px">下面是這一題寫成一般程式的樣子，左邊的 von Neumann machine 照它一步一步做。右邊的圖是同一題的另一種寫法。</span>
       <pre class="task-code" id="taskCode"></pre>
     </div>
     <div class="task-side" aria-live="polite">
@@ -302,11 +302,11 @@ footer a{color:var(--inet)}
     </div>
   </section>
 
-  <section class="duo stage" aria-label="兩個模型">
+  <section class="duo stage" aria-label="兩個 abstract machine">
     <article class="panel vn">
       <header><span class="tag">von Neumann machine</span><div class="chips" id="vnChips"></div></header>
       <div class="view">
-        <canvas id="vnCanvas" aria-label="von Neumann machine 的 3D 模型：memory 裡的 instruction 與資料、CPU 與 register"></canvas>
+        <canvas id="vnCanvas" aria-label="von Neumann machine 的 3D 場景：memory 裡的 instruction 與資料、CPU 與 register"></canvas>
         <div class="viewtools"><button id="vnIn" aria-label="放大">+</button><button id="vnOut" aria-label="縮小">−</button><button id="vnHome" aria-label="視角歸位">⌂</button></div>
         <div class="hint">拖曳旋轉</div>
       </div>
@@ -317,7 +317,7 @@ footer a{color:var(--inet)}
     <article class="panel inet">
       <header><span class="tag">Interaction net</span><div class="chips" id="inChips"></div><div class="exec"><span class="lb">由誰執行</span><div class="seg" id="execSeg"><button type="button" data-x="hw" aria-pressed="true">專用硬體（tile）</button><button type="button" data-x="sw" aria-pressed="false">CPU 上的 runtime</button></div></div></header>
       <div class="view">
-        <canvas id="inCanvas" aria-label="interaction net 的 3D 模型：node、port 與 wire"></canvas>
+        <canvas id="inCanvas" aria-label="interaction net 的 3D 場景：node、port 與 wire"></canvas>
         <div class="viewtools"><button id="inRot" aria-pressed="true" aria-label="自動擺動視角">擺動</button><button id="inIn" aria-label="放大">+</button><button id="inOut" aria-label="縮小">−</button><button id="inHome" aria-label="視角歸位">⌂</button></div>
         <ul class="legend" aria-label="圖例">
           <li><i style="background:var(--c-s)"></i>數字</li><li><i style="background:var(--c-add)"></i>運算</li><li><i style="background:var(--c-mul)"></i>函式・分支</li><li><i style="background:var(--c-z)"></i>list・tree</li><li><i style="background:var(--c-dup)"></i>δ 複製</li><li><i style="background:var(--c-era)"></i>ε 丟棄</li>
@@ -336,17 +336,17 @@ footer a{color:var(--inet)}
   <section class="chapter" id="chapter" aria-live="polite"></section>
 
   <section class="section" id="why">
-    <h2>模型和執行它的東西是兩回事</h2>
-    <p class="lede">計算模型是一套寫在紙上的規則。照規則把程式跑出來的，可以是軟體，也可以是硬體。你熟悉的 ISA 和 RTL 都是這樣。</p>
+    <h2>Abstract machine 和執行它的東西是兩回事</h2>
+    <p class="lede">Abstract machine 是一套寫在紙上的規則。照規則把程式跑出來的，可以是軟體，也可以是硬體。你熟悉的 ISA 和 RTL 都是這樣。</p>
     <div class="tablewrap"><table class="sum">
-      <thead><tr><th>模型</th><th>程式是什麼</th><th>跑一步是什麼</th><th>用軟體執行</th><th>用硬體執行</th></tr></thead>
+      <thead><tr><th>Abstract machine</th><th>程式是什麼</th><th>跑一步是什麼</th><th>用軟體執行</th><th>用硬體執行</th></tr></thead>
       <tbody>
         <tr><th>ISA（例如 RISC-V）</th><td>一串 instruction</td><td>PC 指到的那道做完，PC 前進</td><td>Spike、QEMU</td><td>CPU</td></tr>
         <tr><th>RTL</th><td>register 加組合邏輯</td><td>一個 clock edge</td><td>VCS 這類 simulator</td><td>FPGA、ASIC</td></tr>
         <tr><th>Interaction net</th><td>node 接成的圖，加改寫規則</td><td>一對 active pair 被改寫</td><td>BOHM、Inpla、HVM、Vine 的 runtime</td><td>Lamagraph（FPGA 原型）；Frostbite（設計階段）</td></tr>
       </tbody>
     </table></div>
-    <p class="note">這一頁右邊的圖畫的是第三列的模型。圖下方的零件畫的是「誰在執行」，切換「由誰執行」時，上面的圖和步數完全一樣，變的只有下面那一層。兩邊面板上的「資料存取」數的是這段程式動到 memory 幾次：右邊每改寫一對，要讀兩個 node、寫幾個新的 node 和幾條 wire；左邊的運算元大多在 register 裡。用軟體執行時，右邊每一次存取還要再花幾道 instruction，這就是它在一般 CPU 上偏慢的來源。</p>
+    <p class="note">這一頁右邊的圖畫的是第三列的 abstract machine。圖下方的零件畫的是「誰在執行」，切換「由誰執行」時，上面的圖和步數完全一樣，變的只有下面那一層。兩邊面板上的「資料存取」數的是這段程式動到 memory 幾次：右邊每改寫一對，要讀兩個 node、寫幾個新的 node 和幾條 wire；左邊的運算元大多在 register 裡。用軟體執行時，右邊每一次存取還要再花幾道 instruction，這就是它在一般 CPU 上偏慢的來源。</p>
   </section>
 
   <section class="section">
@@ -364,8 +364,8 @@ footer a{color:var(--inet)}
   </section>
 
   <section class="section">
-    <h2>兩個模型各自的全部規則</h2>
-    <p class="lede">左邊的模型認得下面這些 instruction。右邊的圖有六種通用的改寫規則，其中「函式 ⋈ 資料」的內容由每一段程式自己定義。執行中用到的那一條會亮起來。</p>
+    <h2>兩個 abstract machine 各自的全部規則</h2>
+    <p class="lede">左邊的 von Neumann machine 認得下面這些 instruction。右邊的圖有六種通用的改寫規則，其中「函式 ⋈ 資料」的內容由每一段程式自己定義。執行中用到的那一條會亮起來。</p>
     <div class="duo">
       <article class="panel vn">
         <header><span class="tag">Instruction set</span></header>
@@ -407,17 +407,17 @@ footer a{color:var(--inet)}
   </section>
 
   <section class="section">
-    <h2>這個模型省略了什麼</h2>
+    <h2>這一頁的動畫省略了什麼</h2>
     <ul class="plain">
       <li>數字是原生的 node，運算 node 分兩次拿到運算元，分支看數字是不是 0，函式被用到才展開。這三件事參考 HVM2 的做法，位元寬度與浮點數省略。</li>
       <li>右邊的函式直接對資料做 pattern match。closure 與 higher-order function 需要 lambda 與 application 兩種 node，這一頁沒有。</li>
       <li>「一道 instruction 與一輪 interaction 各算一個 step」是這一頁的假設，用來讓兩邊的 step 數可以放在一起看。實際硬體上一次 interaction 要讀寫好幾個 word，成本看實作。</li>
       <li>左邊的 CPU 畫成一個方塊，裡面的 decoder 與 ALU 沒有拆開畫，也沒有 pipeline、cache、branch predictor。</li>
-      <li>右邊 tile 上的五個零件是這一頁自己的簡化模型，用來說明一次 interaction 需要哪些硬體動作。Frostbite 文章列出的 tile 零件是 front end、engine、frame manager、work queue、scheduler，和這裡的分法不完全相同。</li>
+      <li>右邊 tile 上的五個零件是這一頁自己的簡化版本，用來說明一次 interaction 需要哪些硬體動作。Frostbite 文章列出的 tile 零件是 front end、engine、frame manager、work queue、scheduler，和這裡的分法不完全相同。</li>
       <li>左邊的機器沒有 stack，CALL 只記一層回來的 address，所以沒有示範 recursion。</li>
       <li>兩邊各照自己最自然的寫法：第 8 章左邊沒有另外算 len，第 9 章左邊用迴圈走 array、右邊對 tree 遞迴。</li>
       <li>第 7 章的 pipeline 有幾個假設：左邊有 forwarding、分支到 execute 才決定、一律先猜不跳；右邊一個 tile 每個 cycle 可以開始一對新的改寫，新的 active pair 要等接好線之後才能取用。實際晶片的做法不一定相同，尤其是右邊一次 interaction 要幾個 cycle。</li>
-      <li>tile 的模型只保留三條規則，沒有算 tile 之間搬資料的延遲與網路的耗電。</li>
+      <li>tile 的簡化版本只保留三條規則，沒有算 tile 之間搬資料的延遲與網路的耗電。</li>
     </ul>
   </section>
 
@@ -1002,7 +1002,7 @@ const MODES={seq:{label:'一次一個',mode:'seq'},par:{label:'能做的全做',
 
 const CHAPTERS=[
  {title:'程式的樣子',ex:0,mode:'seq',modes:[],
-  lede:'這一章跑一筆訂單的結帳：小計滿 1000 折 100，未滿加 60 運費。先轉一轉兩邊的模型，看同一段程式在兩邊各存成什麼樣子，再按「走一步」。',
+  lede:'這一章跑一筆訂單的結帳：小計滿 1000 折 100，未滿加 60 運費。先轉一轉兩邊的 3D 圖，看同一段程式在兩邊各存成什麼樣子，再按「走一步」。',
   rows:[
    ['程式是什麼','一串 instruction，照 address 排在 memory 裡。這一段是 00 到 06 七道。','一張圖。每個 node 有一個 principal port（尖端那一頭）和零到數個 auxiliary port，port 與 port 之間用 wire 相接。這一段是 ×、δ、≥1000、if 四個 node，加上兩個數字。'],
    ['資料在哪裡','在 register 與 memory cell 裡，用名字或 address 找到。price 與 qty 在 r1、r2。同一格可以反覆覆寫。','資料也是 node。300 和 3 各是一個數字 node，沒有 address，只有誰接著誰。算出來的 900 會是一個新的 node。'],
@@ -1010,7 +1010,7 @@ const CHAPTERS=[
    ['if / else 長什麼樣','兩條路的 instruction 都在 memory 裡，BLT 決定 PC 走哪一條。','圖上只有一個 if node，兩條路都還沒畫出來。等比較結果接到它的 principal port，它才長出其中一條。']],
   tryit:'點右邊任何一個 node，下面會說明它的 port 各接到哪裡。'},
  {title:'誰來執行這張圖',ex:0,mode:'seq',modes:[],extra:'map',
-  lede:'還是同一筆訂單。右邊那張圖是計算模型，它本身沒有規定由誰來執行。圖的下方立著執行它的東西，右邊面板上方可以切換兩種：專用硬體（一個 tile：scheduler、work queue、規則表、engine、node memory），或是一般 CPU 上的 runtime（同樣五個角色，全部是軟體）。左邊的 von Neumann 模型則和它的硬體長在一起：memory、CPU、register。用「走一個階段」慢慢走，看兩邊哪裡亮起來，並注意兩邊「資料存取」的次數。',
+  lede:'還是同一筆訂單。右邊那張圖是一個 abstract machine，它本身沒有規定由誰來執行。圖的下方立著執行它的東西，右邊面板上方可以切換兩種：專用硬體（一個 tile：scheduler、work queue、規則表、engine、node memory），或是一般 CPU 上的 runtime（同樣五個角色，全部是軟體）。左邊的 von Neumann machine 則和它的硬體長在一起：memory、CPU、register。用「走一個階段」慢慢走，看兩邊哪裡亮起來，並注意兩邊「資料存取」的次數。',
   rows:[
    ['記住做到哪','PC：CPU 裡的一個 register，記著下一道 instruction 的 address。','Work queue：存著還沒做的 active pair。裡面可以同時有很多個「走一步」。'],
    ['程式放哪裡','memory：fetch 時用 PC 的 address 取出 instruction。','規則表存每一種 node 相遇時要怎麼改寫；圖本身存在 node memory。'],
@@ -1076,7 +1076,7 @@ const CHAPTERS=[
    ['代價','共用大型資料很便宜。這段程式左邊甚至不用算 len：迴圈跑完，i 就是筆數。','大型資料要給兩個人用就得複製，或者改寫成一趟走完、邊加邊數。這是 interaction net 最常被問到的弱點。']],
   tryit:'注意右上角的 node 數：先變多，最後只剩結果一個。'},
  {title:'多個 tile 分工',ex:5,mode:'t2',modes:['t1','t2','t3','t4','par'],extra:'bars',bars:['t1','t2','t3','t4','par'],tilesCh:true,
-  lede:'前面每一章右邊圖的下方都只有一個 tile。這一章把 4、9、16 個一模一樣的 tile 排成一片：每個 tile 都有自己的 scheduler、work queue、規則表、engine 和 node memory，只和上下左右的鄰居相連。scheduler 只守三條規則：先做自己的、沒事就向鄰居拿一對、拿不到就睡。這是 Frostbite 那一類晶片的做法，這裡是簡化過的模型。',
+  lede:'前面每一章右邊圖的下方都只有一個 tile。這一章把 4、9、16 個一模一樣的 tile 排成一片：每個 tile 都有自己的 scheduler、work queue、規則表、engine 和 node memory，只和上下左右的鄰居相連。scheduler 只守三條規則：先做自己的、沒事就向鄰居拿一對、拿不到就睡。這是 Frostbite 那一類晶片的做法，這裡是簡化過的版本。',
   rows:[
    ['一個執行單元是什麼','一個 core。所有 core 共用同一塊 memory。','一個 tile：一台完整的小機器，queue、memory、engine 都是自己的。地板上每一塊 tile 立著同樣的五個零件，只是畫得比較小。'],
    ['程式怎麼寫','一個迴圈走過 array，八圈。這是左邊最自然的寫法。','對 tree 遞迴：rev 碰到「區」，就換成「rev(左) + rev(右)」，兩邊各自往下。這是右邊最自然的寫法。'],
@@ -1607,7 +1607,7 @@ let mem0=0;
 function applyExec(){
   document.querySelectorAll('#execSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.x===execMode)));
   const sw=execMode==='sw';
-  $('#execNote').innerHTML=sw?'<b>右邊現在由 CPU 上的 runtime 執行</b>　地板上的五個零件都是軟體：一個迴圈、一個 queue、一張跳躍表、一顆一般的 CPU、一塊 heap。上面那張圖的每一步，在這裡都要換成好幾道 instruction 和好幾次 memory 存取。1996 到 2025 年的實作都是這樣跑的。':'<b>右邊現在由專用硬體（tile）執行</b>　地板上的五個零件是電路：改寫一對 active pair 是這台機器原生的一步。這是 2025 年以後才有人做的事，目前只有原型和 pre-silicon 的設計。';
+  $('#execNote').innerHTML=sw?'<b>右邊現在由 CPU 上的 runtime 執行</b>　地板上的五個零件都是軟體：一個迴圈、一個 queue、一張跳躍表、一顆一般的 CPU、一塊 heap。上面那張圖的每一步，在這裡都要換成好幾道 instruction 和好幾次 memory 存取。1996 年以來的軟體實作都是這樣跑的。':'<b>右邊現在由專用硬體（tile）執行</b>　地板上的五個零件是電路：改寫一對 active pair 是這台機器原生的一步。第一個 FPGA 原型出現在 2024 到 2025 年，目前只有原型和 pre-silicon 的設計。';
   const lg=$('#floorLegend'); if(lg) lg.textContent=sw?'地板上：CPU 上的 runtime':'地板上：tile 的硬體';
 }
 function reset(){
