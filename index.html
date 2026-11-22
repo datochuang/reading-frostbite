@@ -76,15 +76,24 @@ footer{border-top:1px solid var(--rule);padding-top:16px;font-size:14.5px;color:
   <h1><span>Reading Frostbite</span></h1>
   <p class="sub">How to read the news about a CPU “discovered, designed, and verified end-to-end by AI”</p>
   <p class="lede">In November 2026 a startup announced Frostbite, a processor design that runs interaction nets in place of a stream of instructions. The announcement reports 4.59 times the performance per watt of a comparison core, and says AI did the work from architecture to verification.</p>
-  <p class="lede">This site collects the background needed to read that announcement: a whiteboard deck and five interactive explainers. It is written for engineers who know CPUs and RTL and have not met interaction nets before.</p>
+  <p class="lede">This site collects the background needed to read that announcement, in three forms: an article to read, a whiteboard deck to present, and five interactive explainers. It is written for engineers who know CPUs and RTL and have not met interaction nets before.</p>
 </header>
+
+<section>
+  <h2><span>The article: a long read</span></h2>
+  <div class="col">
+    <p>The whole argument written out as prose, with the whiteboard drawings as figures. It covers what the article claims, what an abstract machine is, where an interaction net fits, how to read the 4.59× number, and what AI changes in chip design. About fifteen minutes.</p>
+    <a class="btn" href="article/index.html">Read the article</a>
+    <span class="facts">ENGLISH · 24 FIGURES</span>
+  </div>
+</section>
 
 <section>
   <h2><span>The deck: 25 whiteboard slides</span></h2>
   <div class="deck">
     <a class="cover" href="slides/reading-frostbite.pdf"><img src="slides/cover.jpg" width="1200" height="800" alt="First slide of the deck: Why this deck exists"></a>
     <div class="col">
-      <p>In English, one drawing per page. The first three pages carry the whole argument: why the deck exists, what the article itself says, and a reader's view of its three claims. Four threads follow:</p>
+      <p>The same argument, one drawing per page, for presenting to a group. In English. The first three pages carry the whole argument: why the deck exists, what the article itself says, and a reader's view of its three claims. Four threads follow:</p>
       <ol>
         <li>What an abstract machine is</li>
         <li>The interaction net and Frostbite</li>

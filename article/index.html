@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to read the Frostbite announcement</title>
+<meta name="description" content="A long read on the Frostbite announcement: what the article claims, what an abstract machine is, where interaction nets fit, and what AI changes in chip design.">
+<style>
+/* Layout: one reading column of prose; each board sits between paragraphs, smaller than
+   full size, and opens at full size when clicked. */
+:root{
+  --bg:#f2f4f7; --sheet:#ffffff; --ink:#16202b; --ink-2:#4a5866; --mute:#7b8794;
+  --rule:#d3dae2; --marker:#d9530b; --pen:#1d5fbf; --tint-pen:#e8f0fb; --tint-marker:#fdeee3;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-label:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11161c; --sheet:#1a212a; --ink:#e7ecf1; --ink-2:#aab5c1; --mute:#8592a0;
+    --rule:#2d3743; --marker:#ff8a4c; --pen:#82b3f7; --tint-pen:#18283c; --tint-marker:#3a2416;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:18px;line-height:1.72}
+.wrap{max-width:760px;margin:0 auto;padding:40px max(18px, env(safe-area-inset-right, 0px)) 90px max(18px, env(safe-area-inset-left, 0px))}
+a{color:var(--pen);text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--marker);outline-offset:3px}
+.top{font-size:15px;color:var(--mute);display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:34px}
+.top a{color:var(--ink-2)}
+.eyebrow{font-family:var(--font-label);font-size:13px;letter-spacing:.08em;color:var(--mute)}
+h1{font-size:clamp(32px,5.6vw,46px);line-height:1.15;margin:10px 0 14px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h1 span{box-shadow:inset 0 -0.16em 0 var(--marker)}
+.standfirst{font-size:clamp(19px,2.6vw,22px);line-height:1.5;color:var(--pen);margin:0 0 26px}
+h2{font-size:27px;line-height:1.25;margin:64px 0 6px;font-weight:700;text-wrap:balance}
+h2 span{box-shadow:inset 0 -0.14em 0 var(--marker)}
+h2 .k{display:block;font-family:var(--font-label);font-size:13px;letter-spacing:.08em;color:var(--mute);font-weight:400;box-shadow:none;margin-bottom:4px}
+h3{font-size:20.5px;line-height:1.35;margin:40px 0 4px;font-weight:700}
+p{margin:14px 0}
+ul,ol{margin:14px 0;padding-left:1.3em}
+li{margin:6px 0}
+blockquote{margin:16px 0;padding:2px 0 2px 16px;border-left:3px solid var(--rule);color:var(--ink-2)}
+.brief{background:var(--tint-pen);border-radius:6px;padding:16px 20px;margin:26px 0}
+.brief h2{margin:0 0 6px;font-size:18px}
+.brief ul{margin:6px 0}
+.toc{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:14px 0;margin:26px 0;font-size:16px}
+.toc ol{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2px 24px;padding-left:1.4em}
+.toc li{margin:2px 0}
+figure{margin:26px auto;max-width:640px}
+figure a{display:block;border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff}
+figure img{display:block;width:100%;height:auto}
+figcaption{font-size:14.5px;line-height:1.5;color:var(--mute);margin-top:7px}
+.own{background:var(--tint-marker);border-radius:4px;padding:1px 7px;font-size:.86em;white-space:nowrap}
+.note{font-size:16px;color:var(--ink-2)}
+.sources li{font-size:16px}
+footer{border-top:1px solid var(--rule);margin-top:60px;padding-top:16px;font-size:15px;color:var(--mute)}
+@media (max-width:560px){ body{font-size:17px} h2{font-size:24px;margin-top:52px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="top"><a href="../index.html">← Reading Frostbite</a><a href="../slides/reading-frostbite.pdf">The same argument as a 25-page deck (PDF)</a></nav>
+
+<header>
+  <div class="eyebrow">NOVEMBER 2026 · A LONG READ</div>
+  <h1><span>How to read the Frostbite announcement</span></h1>
+  <p class="standfirst">A CPU “discovered, designed, and verified end-to-end by AI” makes three separate claims. This guide takes them one at a time.</p>
+</header>
+
+<div class="brief">
+  <h2>In brief</h2>
+  <ul>
+    <li>The article makes three claims: a new CPU architecture, 4.59 times the performance per watt, and a design done by AI.</li>
+    <li>The architecture is an old kind of machine, rebuilt. Its instruction set is the interaction net, a way of computing published in 1990, in the same family as the dataflow and graph-reduction machines of the 1980s.</li>
+    <li>The performance number comes from simulation and from one comparison against a small, unnamed CPU core. A real chip would confirm the number. It would not widen the comparison.</li>
+    <li>The design flow is the part worth preparing for. AI makes each attempt cheaper. It does not make an attempt right, and it depends on a specification that a machine can check.</li>
+  </ul>
+</div>
+
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#article">What the article says</a></li>
+    <li><a href="#view">A reader's view</a></li>
+    <li><a href="#companies">The companies and the money</a></li>
+    <li><a href="#machine">What an abstract machine is</a></li>
+    <li><a href="#inet">The interaction net and Frostbite</a></li>
+    <li><a href="#ai">AI in chip design</a></li>
+    <li><a href="#team">What a chip team can do</a></li>
+    <li><a href="#about">About and sources</a></li>
+  </ol>
+</nav>
+
+<p>This guide is written for engineers who know CPUs, RTL and verification, and who have not met interaction nets before. Statements that come from the company's article are marked as such. Readings and inferences that are this guide's own carry the tag <span class="own">this guide's inference</span>.</p>
+
+<h2 id="article"><span class="k">1</span><span>What the article says</span></h2>
+
+<p>On 18 November 2026 Architect Labs published <a href="https://architectlabs.com/blog/frostbite">“Introducing Frostbite: A new CPU architecture discovered, designed, and verified end-to-end by AI”</a>. The article makes three claims that can be judged separately.</p>
+
+<p><strong>A new CPU architecture.</strong> The article calls Frostbite “a general-purpose CPU with a new instruction set built from the ground up”. The instruction set is the interaction net, described in section 5. The unit used for comparison is one quad, a two-by-two grid of tiles, paired with four “L3” nodes: 0.792 mm² on a 7 nm process, with timing closed at 500 MHz in the final layout. No chip has been built; the article describes its own power figures as “pre-silicon”. It names no target market. On what the design is good at, it says the architecture “does most strongly on highly parallelizable tasks”.</p>
+
+<p><strong>Better performance per watt.</strong> The headline number is a geometric mean of 4.59 times the performance per watt of a comparison core, over 25 test programs. The comparison core is one “superscalar, dual-issue, in-order” CPU core of 0.895 mm² in the same process. The article does not name it, “for legal reasons”. Individual programs range from 1.15 times (Fibonacci) to 23.12 times (a two-dimensional convolution).</p>
+
+<p><strong>AI did the design.</strong> The article says Frostbite “was designed with zero architectural priors”, by swarms of AI agents that “tried 58 ideas and kept 37 of them”. The specification was written in a language the company designed itself, called ASL (it is not Arm's specification language of the same abbreviation), and translated into more than 800,000 lines of Lean, a proof checker.</p>
+
+<figure><a href="img/claims.jpg"><img src="img/claims.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: what the Frostbite article says, in three claims."></a>
+<figcaption>Figure 1. The three claims. Everything on this board repeats the article; as of 22 November 2026 no independent check was public.</figcaption></figure>
+
+<h2 id="view"><span class="k">2</span><span>A reader's view</span></h2>
+
+<p>The rest of this guide gives the reasons. The short version, claim by claim:</p>
+
+<ul>
+  <li><strong>On the architecture: an old kind of machine, rebuilt.</strong> The interaction net dates from 1990. Building hardware for a way of computing that was first worked out in mathematics has been tried several times, and those machines did not stay in the mainstream. Programs for it are written in a new language, Vine, and the article describes no way to run existing software. Where it could fit is narrower than “general-purpose”: irregular parallel work such as search, graphs and simulation.</li>
+  <li><strong>On the number: the comparison is too narrow.</strong> The result is simulated. The comparison is with one small, unnamed core. The largest win is a convolution, which is normally given to SIMD units or a GPU. The programs used while tuning the design score 6.02 times; the ones held back score 3.83 times.</li>
+  <li><strong>On the design flow: worth preparing for.</strong> AI lowers the cost of each attempt. It does not change whether an attempt is right. The flow relies on a specification a machine can check, and the article says little about what the humans did.</li>
+</ul>
+
+<figure><a href="img/view.jpg"><img src="img/view.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: a reader's view of the three claims."></a>
+<figcaption>Figure 2. One reading of each claim. The verdicts and the blue box are this guide's own.</figcaption></figure>
+
+<h2 id="companies"><span class="k">3</span><span>The companies and the money</span></h2>
+
+<p>Three companies appear in this story. One old idea, the interaction net, connects them.</p>
+
+<ul>
+  <li><strong>Higher Order Company</strong> makes HVM, software that runs interaction nets on today's CPUs and GPUs. Its current language, Bend 2, no longer uses them. Its founder has reported a seed round of about $4 million in 2023.</li>
+  <li><strong>Tendrils Compute</strong> makes the Vine programming language and says it is building a processor “to have thousands of cores operating in parallel”. On 10 November 2026 it <a href="https://tendrils.co/blog/2026-11-10/30m-raised">announced $30 million</a> in funding led by Benchmark, which co-led the Series A round of the chip maker Cerebras in 2016. As of November 2026 it has not published chip measurements.</li>
+  <li><strong>Architect Labs</strong> builds an AI system that designs chips. On 18 June 2026 it <a href="https://architectlabs.com/blog/seed">announced a $24 million seed round</a> led by Kindred Ventures, a seed-stage fund. Frostbite is its second published design; the first, in August 2026, was an AI accelerator called Redwood.</li>
+</ul>
+
+<p>The two hardware efforts are connected: Frostbite's test programs are written in Vine, the language made by Tendrils.</p>
+
+<p>Two points about the money are easy to miss. The $24 million seed was announced five months before Frostbite was, so it is hard to read it as a bet on this particular architecture. <span class="own">this guide's inference</span> And the larger round went to the company that has published no design figures yet. Funding shows attention. It is not yet evidence that the technology works.</p>
+
+<figure><a href="img/companies.jpg"><img src="img/companies.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: three companies, what each builds, and who funded them."></a>
+<figcaption>Figure 3. Who builds what, and who paid for it. Amounts and investors are as announced by the companies.</figcaption></figure>
+
+<h2 id="machine"><span class="k">4 · THREAD 1</span><span>What an abstract machine is</span></h2>
+
+<p>To judge a “new CPU architecture” it helps to separate four things that are easy to run together: the problem, the abstract machine, the programming language, and the implementation.</p>
+
+<p>An abstract machine is a set of rules that answers three questions: what the state is, what one step does, and who decides the next step. Textbooks call this a model of computation. This guide says “abstract machine” because “model” is now easily read as “AI model”.</p>
+
+<figure><a href="img/links.jpg"><img src="img/links.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: four links from problem to implementation."></a>
+<figcaption>Figure 4. Four links. The same problem can go through von Neumann, C and a CPU, or through the interaction net, Vine and Frostbite.</figcaption></figure>
+
+<h3>Two abstract machines you already use</h3>
+
+<p>Chip engineers work with two abstract machines every day. In a synchronous circuit, the state is the contents of all registers, one step is one clock edge, and the clock decides the next step. In the von Neumann machine, the state is memory plus a program counter, one step is one instruction, and the program counter decides the next step.</p>
+
+<p>Each of these can be carried out by a chip or by a program. A synchronous circuit runs on silicon or in a simulator. A von Neumann machine runs on a CPU or in an emulator. The rules are the abstract machine; the chip and the program are two ways to build it.</p>
+
+<figure><a href="img/two.jpg"><img src="img/two.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: the synchronous circuit and the von Neumann machine as two sets of rules."></a>
+<figcaption>Figure 5. Two sets of rules, each with a hardware and a software way to carry it out.</figcaption></figure>
+
+<h3>Where software ends and hardware starts</h3>
+
+<p>A running program passes down through a stack of abstract machines. A Python program is compiled to bytecode, which an interpreter executes, which is itself a program in an instruction set, which a CPU core implements with gates and registers, built from transistors. At every layer there is a language (how you write it), an abstract machine (the rules it follows) and an executor (the layer below, which runs it).</p>
+
+<p>The instruction set is the layer where software ends and hardware begins. It is the agreement between the two sides. A proposal like Frostbite changes the abstract machine at exactly that layer, which is why it is a much larger change than a faster implementation of an existing instruction set.</p>
+
+<figure><a href="img/stack.jpg"><img src="img/stack.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: a stack of layers from a Python program down to transistors, with the hardware line through the ISA."></a>
+<figcaption>Figure 6. The stack. Above the line is software, below it is hardware.</figcaption></figure>
+
+<h3>Does an abstract machine need its own chip?</h3>
+
+<p>Most successful ones never got one. A spreadsheet, a database query language and a bytecode virtual machine each define their own rules, and all three run on ordinary CPUs. Their value lies in what the user no longer has to write: the order of calculation, the way to find the data, the kind of CPU underneath. An abstract machine can be useful for decades without hardware of its own.</p>
+
+<figure><a href="img/ownchip.jpg"><img src="img/ownchip.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: spreadsheet, database query and bytecode all running on one ordinary CPU."></a>
+<figcaption>Figure 7. Three abstract machines that live entirely in software.</figcaption></figure>
+
+<p class="note">The explainers <a href="../explainers/computational-model-from-a-resistor-network.html">“What an abstract machine is”</a> and <a href="../explainers/computational-models-and-the-hardware-line.html">“Where hardware should start”</a> cover this thread interactively, in Traditional Chinese.</p>
+
+<h2 id="inet"><span class="k">5 · THREAD 2</span><span>The interaction net and Frostbite</span></h2>
+
+<h3>The rules</h3>
+
+<p>An interaction net is a graph plus a table of rewrite rules. Each node has several ports, and exactly one of them is its principal port. When two nodes are joined principal port to principal port they form an active pair, and the rule table says what replaces them. In the smallest system, two nodes of the same kind vanish and their wires are joined; two nodes of different kinds each copy the other. One step of the machine is one such rewrite. <a href="https://doi.org/10.1145/96709.96718">Yves Lafont published the idea in 1990</a>.</p>
+
+<p>A reader from chip design can map the terms directly: a node is an instance, a port is a pin, and a wire is a two-pin net.</p>
+
+<p>The single principal port has two consequences. The machine never searches for the next step, because every active pair is ready to go. And two rewrites can never collide, because a node can belong to only one active pair. That is what makes the machine parallel without locks.</p>
+
+<p>There are two costs. Every step allocates nodes and rewires them. And a wire has exactly two ends, so there is no fan-out: using a value twice takes explicit copying, which costs steps.</p>
+
+<figure><a href="img/rules.jpg"><img src="img/rules.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: one rewrite step of an interaction net, with what it gives and what it costs."></a>
+<figcaption>Figure 8. One step, the rule table, and the two sides of the bargain.</figcaption></figure>
+
+<h3>What it promises</h3>
+
+<p>Take one job: add up 1,024 numbers, two at a time. An ordinary CPU with one executor performs 1,023 additions one after another, so the time grows with the number of items. On an interaction net each addition takes two small steps, 2,046 in all, but every pair on one level can be done at once. With enough executors the job finishes in 20 rounds: ten levels, two rounds each. The time grows with the number of levels. These counts follow from the rules; nobody measured them.</p>
+
+<p>The promise, then, is to pay a fixed price per step for a gain that grows with the size of the job, on the condition that there are enough executors.</p>
+
+<figure><a href="img/promise.jpg"><img src="img/promise.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: adding 1024 numbers with one executor and with many."></a>
+<figcaption>Figure 9. Twice the steps, far fewer rounds.</figcaption></figure>
+
+<h3>What kind of work fits</h3>
+
+<p>The article presents Frostbite as general-purpose and names no application. The rules point to a narrower fit. <span class="own">this guide's inference</span></p>
+
+<ul>
+  <li><strong>Likely a good fit:</strong> work made of many independent pieces whose shape is not known in advance, such as tree search, graph traversal, simulation, and compilers and parsers. The pieces run side by side with no locks and no search.</li>
+  <li><strong>Likely a poor fit:</strong> long chains in which each step waits for the last; dense, regular arithmetic that SIMD units and GPUs already do well; and anything that needs today's software.</li>
+</ul>
+
+<p>The article's own results are consistent with this but do not settle it. Its best test is the convolution and its worst is Fibonacci, a chain of dependent steps. It says the design “also outperforms the TCPU on branching, dynamic code”, and gives no figures for that kind of program on its own.</p>
+
+<figure><a href="img/fit.jpg"><img src="img/fit.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: what the article says about uses, and where an interaction net likely fits."></a>
+<figcaption>Figure 10. The article's statement on the left; this guide's inference in the middle and on the right.</figcaption></figure>
+
+<h3>Is it new?</h3>
+
+<p>The theory is from 1990 and was largely complete within that decade. For thirty years interaction nets ran only as software on ordinary processors. The earliest hardware implementation found while preparing this guide is a university FPGA prototype, with code dating from 2024 and a written report from 2025. Most of the money arrived in 2026. As of November 2026 none of the three companies has named a customer; Architect Labs says its design system is “already deployed with semiconductor companies”, without naming them.</p>
+
+<figure><a href="img/history.jpg"><img src="img/history.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: four tracks from 1990 to 2026: theory, software, hardware, commercial."></a>
+<figcaption>Figure 11. Theory came early. Hardware and money came last.</figcaption></figure>
+
+<h3>Earlier abstract machines built as hardware</h3>
+
+<p>Every chip implements some abstract machine, so the question is where the abstract machine came from. Those that grew out of what hardware does cheaply, such as the von Neumann machine, RISC and the GPU, stayed in the mainstream. Those that were worked out first in mathematics or in a programming language, and then given hardware as a replacement for the general-purpose instruction set, did not: Lisp machines, the Prolog machines of Japan's Fifth Generation project, and Java processors. The interaction net belongs to the second group. Its outcome is open.</p>
+
+<p>Ideas from that second group were not wasted. Dataflow machines did not survive as products, and a restricted form of dataflow now runs inside every out-of-order CPU, underneath the existing instruction set, where old software does not have to change.</p>
+
+<figure><a href="img/earlier.jpg"><img src="img/earlier.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: machines that grew out of hardware and machines that came from mathematics or a language."></a>
+<figcaption>Figure 12. Two origins, two records.</figcaption></figure>
+
+<h3>What decides who wins</h3>
+
+<p>Four questions separate the winners from the rest. Does the gain grow with scale? Have ordinary CPUs slowed down? Is a real workload paying first? Can old software come along? The two that decided past cases are the last two, and neither is about architecture. GPUs had gamers buying them years before anyone used them for computing, and existing programs kept running on the CPU beside them. Interaction-net hardware has investors, and investor money is not a paying workload. <span class="own">this guide's inference</span></p>
+
+<figure><a href="img/win.jpg"><img src="img/win.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: four questions and a scoreboard for GPU, Lisp machine and interaction net hardware."></a>
+<figcaption>Figure 13. The two questions that decide are about buyers and software.</figcaption></figure>
+
+<h3>How to read the 4.59×</h3>
+
+<p>Four things qualify the headline number.</p>
+
+<ol>
+  <li><strong>It is simulated.</strong> No chip exists. The article says so itself.</li>
+  <li><strong>The comparison is with one small core.</strong> Small in-order cores are generally efficient per watt, so the baseline is not weak in that sense. The limit is breadth: one core, whose name is withheld, and nothing else.</li>
+  <li><strong>The largest win is a convolution.</strong> For that kind of regular, data-parallel work the usual choice is SIMD, a GPU or many cores, and none of those was the baseline. They would also beat a scalar core on it.</li>
+  <li><strong>Tuned and unseen tests differ.</strong> The ten programs used while searching for the design score 6.02 times; the fifteen held back score 3.83 times.</li>
+</ol>
+
+<p>A measured chip would settle the first point. The other three would remain. The article itself says that “in the coming months” the company will compare against multi-core arrangements and larger out-of-order CPUs, on benchmarks such as SPEC and PARSEC. Those results are the ones to wait for.</p>
+
+<figure><a href="img/number.jpg"><img src="img/number.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: what the 4.59x claim compared, and what is missing."></a>
+<figcaption>Figure 14. The claim, what was compared, and what is missing.</figcaption></figure>
+
+<h3>Where the energy goes</h3>
+
+<p>The article gives no watts or joules, only ratios and shares. If the 4.59 times holds, the same work takes about a fifth of the energy. <span class="own">this guide's inference</span></p>
+
+<p>Within each design, leaving out clock distribution and averaged over 20 of the test programs, the article reports these shares. The comparison core spends 57% on memory, 27% on fetch, decode and issue, and 13% on computing; the article's three figures add up to 97%. A Frostbite quad spends 38% on memory, 26% on its on-chip network and scheduler, 16% on computing, 14% on other functions, and 6% on fetch, decode and issue.</p>
+
+<p>Two things stand out. Memory is still the largest share. And about a quarter of the energy goes to moving work between tiles, a cost the conventional core does not have. Clock distribution, which these shares leave out, is 49% of the comparison core's energy and 41% of the quad's.</p>
+
+<figure><a href="img/energy.jpg"><img src="img/energy.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: total energy for the same work, and how each design splits its own energy."></a>
+<figcaption>Figure 15. Totals on the left are derived from the 4.59× claim. Shares on the right are the article's.</figcaption></figure>
+
+<h3>Old, new, and still unknown</h3>
+
+<p>Two things are old: the interaction net, and the practice of building an abstract machine as hardware. Three things are new: the timing, since single-core gains have slowed; the AI design flow; and the money. One thing is unknown: whether the architecture wins.</p>
+
+<figure><a href="img/summary.jpg"><img src="img/summary.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: three boxes labelled old, new and unknown."></a>
+<figcaption>Figure 16. Sorting the claims.</figcaption></figure>
+
+<p class="note">The explainers <a href="../explainers/interaction-net-vs-von-neumann.html">“Interaction net against von Neumann”</a>, <a href="../explainers/interaction-net-test-cases.html">“Eight tests”</a> and <a href="../explainers/interaction-net-history.html">“Thirty-six years of interaction nets”</a> go further into this thread, in Traditional Chinese.</p>
+
+<h2 id="ai"><span class="k">6 · THREAD 3</span><span>AI in chip design</span></h2>
+
+<h3>What counts as a spec</h3>
+
+<p>Attempts to generate RTL from a specification often go badly, and the reason is usually the specification. It helps to sort specifications by what a machine can do with them.</p>
+
+<ul>
+  <li><strong>A document in prose.</strong> There is nothing to check the RTL against, and people argue over what the text means.</li>
+  <li><strong>A reference program,</strong> such as a C program or a CPU simulator. Both are run and the outputs compared. Only the cases that were run are covered.</li>
+  <li><strong>A contract,</strong> written in a form such as SystemVerilog assertions, Lean, or the article's ASL. A tool checks every input.</li>
+  <li><strong>The design itself, written one level up,</strong> such as DSLX in Google's XLS toolchain. RTL is compiled from it, so no separate specification of the RTL is needed.</li>
+</ul>
+
+<p>The article describes a move up this list. Its agents first produced a 141-page PDF. Later, in the article's words, the PDF was deleted “and the ASL contracts became the only specification of the chip”.</p>
+
+<p>The question “is the specification itself right?” does not go away at any level. It moves up to whoever writes the top one. <span class="own">this guide's inference</span></p>
+
+<figure><a href="img/spec.jpg"><img src="img/spec.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: four kinds of spec, an example of each, and how RTL is judged against it."></a>
+<figcaption>Figure 17. Spec-to-RTL works only when a machine can run or check the spec.</figcaption></figure>
+
+<h3>What a contract is</h3>
+
+<p>A contract is a specification a machine can check, and its job is to judge what an agent builds. A small example of this guide's own, not taken from the article: an 8-bit saturating adder, whose sum must stop at the maximum and never wrap around. An RTL version with a bug passes a handful of hand-written tests. A formal check of the same RTL against the contract finds the failing input, a = 192 and b = 64. This example was run for this guide with open-source tools.</p>
+
+<p>Which language the contract is written in matters less than having a judge that checks every input.</p>
+
+<figure><a href="img/contract.jpg"><img src="img/contract.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: a contract, an agent building RTL with a bug, and two judges."></a>
+<figcaption>Figure 18. A few hand tests let the bug through. The formal check finds it.</figcaption></figure>
+
+<h3>How the article says its contracts are built</h3>
+
+<p>According to the article, the company “designed a new in-house specification language, ASL”. There is a contract for each of 31 blocks, and each contract names signals, events, state and clauses. ASL “translates natively to Lean”, and the Frostbite specification came to “800k+ lines of Lean”. Lean is then used “for all theorem proving when checking AI outputs across RTL, UVM, C, SVA, and more”.</p>
+
+<p>Three things are not disclosed: who writes and approves the contracts, which properties are actually proven, and the text of any contract. One figure shows the structure of a single block's contract and the names of its clauses, and no clause is written out. The article says ASL will be described “in more detail in a future post”.</p>
+
+<figure><a href="img/asl.jpg"><img src="img/asl.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: ASL translated into Lean and used to check what the AI agents produce."></a>
+<figcaption>Figure 19. The tools are named. What is proven is not yet shown.</figcaption></figure>
+
+<h3>How the design flow works</h3>
+
+<p>The flow is a loop. A specification goes in. Agents produce a performance simulator, RTL, tests and proofs, and layout. The outputs are checked against the contract, the simulation results come back, and the specification is revised. In the article's description of its search, each proposed change “was checked against the contracts, modeled in Arcmodel, implemented in RTL, and measured for power, and then either kept or dropped”. Arcmodel is the company's system model, itself written in ASL.</p>
+
+<p>The article does not say how many people worked on Frostbite or for how long. What it attributes to people is choosing the classes of workload, splitting the test programs into a search set and a held-out set, and designing ASL. It does not say whether people wrote or reviewed the contracts, the architecture or the RTL. For the company's earlier design, Redwood, it reported “a high-level specification written by two human architects” and a design completed in “under two weeks”.</p>
+
+<figure><a href="img/flow.jpg"><img src="img/flow.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: the loop from human spec writers through AI agents, checks and results."></a>
+<figcaption>Figure 20. A spec goes in. Agents build the rest, and the loop repeats.</figcaption></figure>
+
+<h3>What AI changed, and what it did not</h3>
+
+<p>AI lowers the cost of each attempt, so many more designs can be tried. It does not change whether an attempt is right. Every attempt still has to pass the same four gates: masks and fabrication, measurement on silicon, existing software, and a paying workload.</p>
+
+<p>The article contains a small illustration of the limit. The more attempts are made against a fixed set of tests, the more closely the result fits those tests, which is one way to read the gap between 6.02 times on the tuning set and 3.83 times on the held-out set. <span class="own">this guide's inference</span></p>
+
+<figure><a href="img/changed.jpg"><img src="img/changed.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: a tall pile of cheap attempts, and four gates every attempt must pass."></a>
+<figcaption>Figure 21. Cheaper to try, not more right.</figcaption></figure>
+
+<h3>Across the industry</h3>
+
+<p>Outside this one article, AI in chip design sits at three levels, and the evidence thins as the level rises.</p>
+
+<ul>
+  <li><strong>AI assists the engineer.</strong> This is in production use. <a href="https://www.design-reuse.com/news/53440/synopsys-dso-ai-driven-chip-designs.html">Synopsys reported</a> the first 100 commercial tape-outs using its DSO.ai tool in February 2023, and <a href="https://cadencenextgen.q4web.com/Investors/press-releases/press-release-details/2026/Cadence-Unleashes-ChipStack-AI-Super-Agent-Pioneering-a-New-Frontier-in-Chip-Design-and-Verification/default.aspx">Cadence reported</a> over 1,000 tape-outs across its AI optimisation and assistant products in February 2026. Both counts are the vendors' own.</li>
+  <li><strong>AI agents build the whole chip.</strong> Results so far are simulated. The furthest public example found is <a href="https://arxiv.org/abs/2603.08716">Design Conductor</a>, in which an agent took a short requirements document for a five-stage RISC-V core through to layout data on a predictive process kit. It reached 1.48 GHz against a 1.6 GHz requirement and was not fabricated, and the five-stage structure was specified by people. As of November 2026 this guide found no published silicon measurements from a chip that an LLM agent took from specification to layout.</li>
+  <li><strong>AI finds the architecture.</strong> Also simulated, and the open question is who set the search space. In <a href="https://arxiv.org/abs/2604.25083">Agentic Architect</a>, a university study, the authors state that people chose the target, the starting design, the scoring and the split of test traces; a cache policy it evolved gained 1.13 times on the traces used for training and 1.004 times on unseen ones.</li>
+</ul>
+
+<p>Frostbite claims both of the upper two levels.</p>
+
+<p>Public benchmarks show the same shape as the cheaper-to-try argument. On a set of hardware design problems published by NVIDIA, single models answering once passed roughly 36% to 54% of the problems, and <a href="https://arxiv.org/abs/2602.10218">an agent allowed to revise its answer many times</a> passed about 81% to 96%. Both figures come from the same NVIDIA paper, and the agent is NVIDIA's own. Repeated attempts raise the pass rate, on the condition that a testbench exists to judge each one.</p>
+
+<figure><a href="img/industry.jpg"><img src="img/industry.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: three steps of AI in chip design, with the evidence for each."></a>
+<figcaption>Figure 22. The higher the step, the thinner the evidence.</figcaption></figure>
+
+<h2 id="team"><span class="k">7 · THREAD 4</span><span>What a chip team can do</span></h2>
+
+<p>If writing RTL stops being the limit, the limit moves to the two ends: how precisely the specification is written, and whether verification can act as the judge. A chip design company already owns both. <span class="own">this guide's inference</span></p>
+
+<p>A general version of what follows from that:</p>
+
+<ul>
+  <li><strong>Now:</strong> write specifications in a form a machine can check.</li>
+  <li><strong>Pilot:</strong> try an agent flow on one small block that is not on the critical path.</li>
+  <li><strong>Wait:</strong> on new architectures, until there is data from silicon.</li>
+</ul>
+
+<figure><a href="img/team.jpg"><img src="img/team.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: the bottleneck moving from writing RTL to spec and verification, and three trays labelled now, pilot and wait."></a>
+<figcaption>Figure 23. The bottleneck moves to what a chip team already owns.</figcaption></figure>
+
+<h3>What to watch</h3>
+
+<p>Three signals would change the reading given here: silicon numbers measured by a third party, a buyer with volume, and a path for existing software. If any one of them appears, the question is worth reopening. Another funding round is not one of them.</p>
+
+<p>Three questions are worth asking of any claim of this kind. Is the number measured or projected? Were the tests used for tuning, or held out? Who verified it?</p>
+
+<figure><a href="img/watch.jpg"><img src="img/watch.jpg" width="1280" height="853" loading="lazy" alt="Whiteboard: three signals to watch and three questions for any claim."></a>
+<figcaption>Figure 24. Three signals and three questions.</figcaption></figure>
+
+<h2 id="about"><span class="k">8</span><span>About and sources</span></h2>
+
+<ul class="note">
+  <li>These are one reader's notes. They give a personal reading and do not speak for any company.</li>
+  <li>The author has no connection with the companies mentioned and used only what they have published.</li>
+  <li>Every Frostbite number comes from the announcing company's own article, from simulation before any chip exists. As of 22 November 2026 no independent check was public.</li>
+  <li>The whiteboard drawings were produced by an image-generation model from written prompts, and a person checked the text on each one. The text was prepared with AI assistance.</li>
+  <li>If you find an error, please open an issue in the repository of this site. Text and images are released under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+</ul>
+
+<h3>Sources</h3>
+<ul class="sources">
+  <li>Architect Labs, <a href="https://architectlabs.com/blog/frostbite">Introducing Frostbite</a>, 18 November 2026. Source of every Frostbite figure and quotation above.</li>
+  <li>Architect Labs, <a href="https://architectlabs.com/blog/redwood">Redwood</a>, 27 August 2026, and <a href="https://architectlabs.com/blog/seed">seed announcement</a>, 18 June 2026.</li>
+  <li>Tendrils Compute, <a href="https://tendrils.co/blog/2026-11-10/30m-raised">funding announcement</a>, 10 November 2026, and <a href="https://tendrils.co/blog/2026-04-26/on-inets">On Interaction Nets</a>, April 2026.</li>
+  <li>Yves Lafont, <a href="https://doi.org/10.1145/96709.96718">Interaction Nets</a>, POPL 1990.</li>
+  <li>Synopsys, <a href="https://www.design-reuse.com/news/53440/synopsys-dso-ai-driven-chip-designs.html">first 100 commercial tape-outs using DSO.ai</a>, 7 February 2023.</li>
+  <li>Cadence, <a href="https://cadencenextgen.q4web.com/Investors/press-releases/press-release-details/2026/Cadence-Unleashes-ChipStack-AI-Super-Agent-Pioneering-a-New-Frontier-in-Chip-Design-and-Verification/default.aspx">ChipStack AI Super Agent announcement</a>, 10 February 2026.</li>
+  <li>The Verkor Team, <a href="https://arxiv.org/abs/2603.08716">Design Conductor</a>, arXiv 2603.08716, 2026.</li>
+  <li>Blasberg, Kypriotis and Skarlatos, <a href="https://arxiv.org/abs/2604.25083">Agentic Architect</a>, arXiv 2604.25083, 2026.</li>
+  <li>Pinckney et al., <a href="https://arxiv.org/abs/2506.14074">Comprehensive Verilog Design Problems</a>, arXiv 2506.14074, 2025, and Deng et al., <a href="https://arxiv.org/abs/2602.10218">ACE-RTL</a>, arXiv 2602.10218, 2026.</li>
+</ul>
+
+<footer><a href="../index.html">Reading Frostbite</a> · November 2026</footer>
+</div>
+</body>
+</html>
